@@ -1,0 +1,3028 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>木星に向かう12のステップ</title>
+<style>
+body {
+  background: #0a0a1a;
+  background-image: url("game_background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: #e8e0cc;
+  font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+  font-size: 14px;
+  margin: 0; padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+#header {
+  background: rgba(13, 27, 62, 0.88);
+  border-bottom: 1px solid #3a4a7a;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+#header h1 { font-size: 15px; color: #c8b86a; margin: 0; }
+#header .status { font-size: 12px; color: #8899bb; }
+#header .status { display: flex; align-items: center; gap: 10px; }
+#help-btn {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(200,184,106,0.15); border: 1px solid #c8b86a;
+  color: #c8b86a; font-size: 13px; font-weight: bold; line-height: 1;
+  cursor: pointer; flex-shrink: 0; padding: 0;
+}
+#help-btn:hover { background: rgba(200,184,106,0.3); }
+
+/* ===== ルール解説（モーダル内） ===== */
+#m-extra { margin: 0 0 10px; }
+.rule-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  margin-bottom: 10px;
+}
+.rule-chip {
+  border-radius: 4px; padding: 5px 7px; font-size: 11px; line-height: 1.4;
+  border-left: 3px solid; background: rgba(255,255,255,0.04); color: #c8d4e8;
+}
+.rule-chip b { display: block; font-size: 11px; margin-bottom: 1px; }
+.rule-chip.c-launch { border-color: #c8b86a; }
+.rule-chip.c-construction { border-color: #d08a3a; }
+.rule-chip.c-development { border-color: #5a9a5a; }
+.rule-chip.c-contact { border-color: #5a7aaa; }
+.rule-chip.c-encounter { border-color: #9a6ac0; }
+.rule-chip.c-award { border-color: #e0578a; }
+.rule-note {
+  font-size: 11px; color: #aab8cc; line-height: 1.6;
+  background: rgba(255,255,255,0.03); border-radius: 4px;
+  padding: 6px 8px; margin-bottom: 8px;
+}
+.rule-note b { color: #f0d060; }
+
+/* ===== メインレイアウト ===== */
+#main { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+
+/* ===== 左カラム：手札（上）＋出す場（下） ===== */
+#hand-col {
+  width: 400px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(8, 14, 26, 0.82);
+  border-right: 1px solid #1e2a3e;
+  overflow: hidden;
+  padding: 6px;
+  gap: 4px;
+}
+
+#hand-area {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 2px;
+  align-content: flex-start;
+  overflow: hidden;
+  flex: 1;
+}
+#hand-area .card { border-radius: 3px; flex-shrink: 0; }
+#hand-area .card .cnum { font-size: 8px; top: 2px; left: 2px; }
+#hand-area .card.selectable:hover { transform: translateY(-6px); }
+#hand-area .card.selected { transform: translateY(-9px); }
+
+#center-area {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0 0;
+  border-top: 1px solid #1e2a3e;
+  flex-shrink: 0;
+}
+#played-area { display:flex; gap:3px; flex-wrap: wrap; }
+
+#obs-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: auto;
+  min-width: 0;
+  padding: 8px;
+  gap: 8px;
+}
+
+#obs-wrap-human { padding: 100px 70px; position: relative; }
+
+#ai-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: rgba(8, 14, 26, 0.82);
+  border-left: 1px solid #1e2a3e;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 8px;
+  overflow-y: auto;
+}
+#obs-wrap-ai1, #obs-wrap-ai2 { padding: 45px 15px; position: relative; }
+
+.player-block { display: flex; flex-direction: column; gap: 4px; }
+.player-label { font-size: 11px; color: #8899bb; }
+.player-label .score { color: #c8b86a; font-weight: bold; }
+.player-label.active-player { color: #f0d060; }
+
+/* ===== AIパネル：金色化状態・戦法ラベルの要約表示 ===== */
+.ai-status-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.strategy-badge { font-size:9px; padding:1px 5px; border-radius:3px; background:rgba(255,255,255,0.06); }
+.gold-badge { font-size:9px; color:#9aa8c0; }
+.gold-badge.is-gold { color:#f0d060; }
+
+/* ===== 天文台（共通） ===== */
+.observatory {
+  position: relative;
+  border: 2px solid #3a4a7a;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.observatory.gold { border-color: #b8960a; }
+
+/* 背景画像専用レイヤー：ここだけoverflow:hiddenにして角丸に画像をクリップする。
+   .observatory自体はedge（発射台などの外側にはみ出す部分）を隠したくないのでoverflow:visibleのまま */
+.obs-bg {
+  position: absolute; inset: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+/* 背景画像+中央ラベルをまとめた「盤面表示」レイヤー。
+   このレイヤーだけを縮小/拡大することで、天文台の外側にある発射台などの
+   カード置き場（obs-edge）は常に実寸のまま動かさない */
+.obs-board {
+  position: absolute; inset: 0;
+  transform-origin: center center;
+}
+.obs-ai .obs-bg { background-image: url("observatory_gray_.jpeg"); }
+.obs-ai.gold .obs-bg { background-image: url("observatory_gold.jpg"); }
+.obs-human-large .obs-bg { background-image: url("observatory_gray_.jpeg"); }
+.obs-human-large.gold .obs-bg { background-image: url("observatory_gold.jpg"); }
+
+/* AI用：160×160px */
+.obs-ai {
+  width: 160px; height: 160px;
+}
+
+/* 人間用：300×300px。天文台の盤面（obs-board）だけがロケットカードと
+   同じくらいの大きさ（高さ106px基準）に縮小表示され、カーソルを乗せると実寸に拡大する。
+   発射台などの外側のカード置き場（obs-edge）はここでは触らない＝常に実寸のまま */
+.obs-human-large {
+  width: 300px; height: 300px;
+  cursor: pointer;
+}
+.obs-human-large .obs-board {
+  transform: scale(0.353);
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+.obs-human-large:hover .obs-board {
+  transform: scale(1);
+  z-index: 50;
+}
+/* ホバーが効かない環境（タッチ操作など）向けに、タップでも拡大/縮小を切り替えられるようにする */
+.obs-human-large .obs-board.expanded {
+  transform: scale(1) !important;
+  z-index: 50;
+}
+
+/* ===== 天文台エッジ ===== */
+.obs-edge {
+  position: absolute;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow: visible;
+}
+
+/* AI天文台エッジ（160px、端40px） */
+.obs-ai .obs-top    { top:0; left:40px; right:40px; height:40px; border-bottom:1px dashed #2a3a5a; }
+.obs-ai .obs-bottom { bottom:0; left:40px; right:40px; height:40px; border-top:1px dashed #2a3a5a; }
+.obs-ai .obs-left   { left:0; top:40px; bottom:40px; width:40px; border-right:1px dashed #2a3a5a; flex-direction:column; }
+.obs-ai .obs-right  { right:0; top:40px; bottom:40px; width:40px; border-left:1px dashed #2a3a5a; flex-direction:column; }
+.obs-ai .obs-center {
+  position:absolute; top:40px; left:40px; right:40px; bottom:40px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:8px; color:#334455; text-align:center;
+}
+
+/* 人間天文台エッジ：天文台の外側に配置 */
+.obs-human-large .obs-top {
+  top: -95px; left: 0; right: 0; height: 90px;
+  border-bottom: 1px dashed #2a3a5a;
+  overflow: visible; align-items: flex-end; padding-bottom: 4px;
+}
+.obs-human-large .obs-bottom {
+  bottom: -95px; left: 0; right: 0; height: 90px;
+  border-top: 1px dashed #2a3a5a;
+  overflow: visible; align-items: flex-start; padding-top: 4px;
+}
+.obs-human-large .obs-left {
+  left: -65px; top: 0; bottom: 0; width: 60px;
+  border-right: 1px dashed #2a3a5a;
+  flex-direction: column; overflow: visible; align-items: center; justify-content: center;
+}
+.obs-human-large .obs-right {
+  right: -65px; top: 0; bottom: 0; width: 60px;
+  border-left: 1px dashed #2a3a5a;
+  flex-direction: column; overflow: visible; align-items: center; justify-content: center;
+}
+.obs-human-large .obs-center {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: #5a7090; text-align: center;
+}
+
+.edge-label { font-size:10px; color:#7a92b8; display:block; width:100%; text-align:center; }
+
+/* ===== 衛星ボーナス達成報酬タイル ===== */
+.bonus-tile {
+  position: absolute;
+  width: 22px; height: 36px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 3px;
+  border: 1px solid #6a7aa0;
+  box-shadow: 0 0 4px rgba(0,0,0,0.6);
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.3s, filter 0.3s, box-shadow 0.3s, border-color 0.3s;
+}
+.bonus-tile-jupiter { background-image: url("data:image/jpeg;base64,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"); }
+.bonus-tile-mars    { background-image: url("data:image/jpeg;base64,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"); }
+.bonus-tile.claimed-here {
+  border-color: #f0d060;
+  box-shadow: 0 0 8px 2px #f0d060;
+  filter: none;
+  opacity: 1;
+}
+.bonus-tile.claimed-elsewhere {
+  opacity: 0.25;
+  filter: grayscale(100%);
+}
+.bonus-tile.unclaimed {
+  opacity: 0.9;
+  filter: none;
+}
+/* 人間天文台：外側エッジ上に配置 */
+.obs-human-large .obs-top .bonus-tile    { top: 2px; right: 4px; width: 30px; height: 49px; }
+.obs-human-large .obs-left .bonus-tile   { top: 4px; left: 50%; transform: translateX(-50%); width: 30px; height: 49px; }
+/* AI天文台：40px幅の帯の中に小さく配置 */
+.obs-ai .obs-top .bonus-tile  { top: 1px; right: 2px; width: 16px; height: 26px; }
+.obs-ai .obs-left .bonus-tile { top: 2px; left: 50%; transform: translateX(-50%); width: 16px; height: 26px; }
+
+/* ===== ミニカード（AI天文台用） ===== */
+.rocket-mini {
+  width:26px; height:41px;
+  border-radius:2px; border:1px solid #3a4a7a;
+  background:#1a2240; overflow:hidden;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:7px; color:#8899bb; flex-shrink:0;
+}
+.rocket-mini img { width:100%; height:100%; object-fit:cover; }
+.rocket-mini.face-down { background:#0e1830; }
+
+/* ===== ブリッジカード（人間天文台用・手札と同サイズ） ===== */
+.rocket-bridge {
+  width:68px; height:106px;
+  border-radius:3px; border:1px solid #3a4a7a;
+  background:#1a2240; overflow:hidden;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:8px; color:#8899bb; flex-shrink:0; position:relative;
+}
+.rocket-bridge img { width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; }
+.rocket-bridge .cnum { display:none; }
+.rocket-bridge.face-down { background:#0e1830; }
+
+/* ===== 旧human-zone削除済み ===== */
+
+/* ===== 天文台エッジのカード重ね表示 ===== */
+.obs-stack {
+  position: relative;
+  display: inline-block;
+}
+.obs-stack .rocket-bridge,
+.obs-stack .rocket-mini {
+  position: absolute;
+  top: 0; left: 0;
+}
+/* 人間天文台：obs-stackの高さは実際はJS側(renderObs)でカード枚数に応じて動的に指定される */
+.obs-human-large .obs-stack {
+  height: 89px; /* カード高さ（基準値・実際は動的） */
+}
+/* AI天文台：数字部分（12px）だけずらして重ねる */
+.obs-ai .obs-stack {
+  height: 41px;
+}
+#hand-area {
+  display:flex; gap:4px; flex-wrap:wrap;
+  align-content:flex-start;
+  overflow:hidden;
+  flex:1;
+}
+
+.area-label { font-size:11px; color:#7a92b0; margin-bottom:4px; }
+.played-slot { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.slot-name { font-size:10px; color:#7a92b0; }
+.slot-val  { font-size:14px; font-weight:bold; color:#f0d060; min-height:18px; text-align:center; }
+
+/* ===== カード（手札・場）57×89px ===== */
+.card {
+  width:57px; height:89px;
+  border-radius:3px; border:1px solid #3a4a7a;
+  background:#1a2240; position:relative; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:bold; color:#c8d8f0;
+  flex-shrink:0; cursor:default;
+  transition:transform 0.12s, box-shadow 0.12s;
+}
+.card img { width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; }
+.card .cnum { display:none; position:absolute; top:2px; left:3px; font-size:10px; color:#a8bedd; z-index:1; text-shadow:0 0 3px #000; }
+.card .cnum.show { display:block; }
+#hand-area .card .cnum { font-size:16px; top:4px; left:6px; }
+.card.face-down { background:#0e1830; }
+.card.selectable {
+  cursor:pointer; border-color:#7a94e0;
+  box-shadow:0 0 8px rgba(122,148,224,0.55);
+}
+.card.selectable:hover { transform:translateY(-10px); box-shadow:0 6px 14px rgba(122,148,224,0.7); }
+.card.selected { transform:translateY(-14px); border-color:#f0d060; box-shadow:0 6px 18px rgba(240,208,96,0.6); }
+.card.played-card { border-color:#c8b86a; }
+
+/* ===== 手札カード：少し大きく ===== */
+#hand-area .card {
+  width:130px; height:203px;
+  border-radius:5px;
+}
+#hand-area .card .cnum { font-size:18px; top:5px; left:7px; }
+#hand-area .card.selectable:hover { transform:translateY(-20px); }
+#hand-area .card.selected { transform:translateY(-24px); }
+
+#discard-wrap { display:none; }
+#deck-wrap { display:none; }
+#deck-count { font-size:20px; font-weight:bold; color:#8899bb; }
+
+/* ===== アクションパネル ===== */
+#action-panel {
+  background:#0e1828; border:1px solid #2a3a5a;
+  border-radius:4px; padding:8px;
+  min-width:150px; max-width:200px; flex-shrink:0;
+}
+#action-panel h3 { font-size:12px; color:#a8bedd; margin:0 0 6px; }
+.abtn {
+  display:block; width:100%; margin-bottom:5px;
+  padding:6px 8px; background:#1a2a4a; border:1px solid #3a5a8a;
+  border-radius:3px; color:#b0c8e8; font-size:12px;
+  cursor:pointer; text-align:left; line-height:1.3;
+}
+.abtn:hover:not(:disabled) { background:#253a60; border-color:#c8b86a; }
+.abtn:disabled { opacity:0.35; cursor:default; }
+.abtn.primary { border-color:#c8b86a; color:#f0d060; }
+
+/* ===== ログ（画面下部・横スクロール） ===== */
+#log-area {
+  flex-shrink:0; background:#080e1a;
+  border-top:1px solid #1e2a3e; height:54px;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+#log-area h3 { font-size:11px; color:#6a86ac; padding:3px 10px; border-bottom:1px solid #1e2a3e; margin:0; flex-shrink:0; }
+#log-list {
+  flex:1; overflow-x:auto; overflow-y:hidden;
+  padding:4px 8px; display:flex; flex-direction:row;
+  gap:10px; align-items:center; white-space:nowrap;
+}
+.log-e { font-size:12px; line-height:1.4; color:#7a92b0; border-left:2px solid #1e2a3e; padding-left:5px; flex-shrink:0; }
+.log-e.imp { color:#c8b86a; border-left-color:#c8b86a; }
+.log-e.you { color:#88bbff; border-left-color:#4466cc; }
+.log-e.ai  { color:#88cc88; border-left-color:#448844; }
+
+/* ===== モーダル ===== */
+#modal {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.75); z-index:200;
+  align-items:center; justify-content:center;
+}
+#modal.show { display:flex; }
+#mbox {
+  background:#0e1828; border:1px solid #3a5a8a;
+  border-radius:6px; padding:20px 24px;
+  min-width:260px; max-width:400px; max-height:80vh; overflow-y:auto;
+}
+#mbox h2 { font-size:14px; color:#c8b86a; margin:0 0 10px; }
+#mbox p  { font-size:13px; color:#aab8cc; margin:0 0 12px; line-height:1.5; white-space:pre-line; }
+.mbtn {
+  display:block; width:100%; margin-bottom:5px; padding:7px 12px;
+  background:#1a2a4a; border:1px solid #3a5a8a; border-radius:3px;
+  color:#b0c8e8; font-size:12px; cursor:pointer; text-align:left;
+}
+.mbtn:hover { background:#253a60; border-color:#c8b86a; color:#f0d060; }
+
+/* ===== ゲーム終了モーダル（木星到達演出） ===== */
+#modal-final {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.82); z-index:210;
+  align-items:center; justify-content:center;
+}
+#modal-final.show { display:flex; }
+#mfbox {
+  position:relative; width:320px; max-width:88vw; max-height:85vh; overflow-y:auto;
+  background:linear-gradient(180deg,#0e1626,#060a14);
+  border:1px solid #c8963a; border-radius:10px;
+  padding:22px 20px 18px; text-align:center;
+  box-shadow:0 0 60px rgba(210,160,80,0.22);
+}
+#mf-planet {
+  width:110px; height:110px; margin:0 auto 12px; border-radius:50%;
+  background: repeating-linear-gradient(178deg,
+     #e8c48c 0px, #e8c48c 9px,
+     #c98f4a 9px, #c98f4a 16px,
+     #f0d8b0 16px, #f0d8b0 24px,
+     #b97a3a 24px, #b97a3a 31px,
+     #e8c48c 31px, #e8c48c 40px,
+     #d9a86c 40px, #d9a86c 48px
+  );
+  box-shadow: inset -12px -8px 26px rgba(0,0,0,0.5), 0 0 36px rgba(230,180,110,0.35);
+  position:relative; animation:mfGlow 3.2s ease-in-out infinite;
+}
+#mf-planet::after {
+  content:''; position:absolute; width:24px; height:15px; border-radius:50%;
+  background:#a8503a; opacity:0.7; top:40px; left:18px; filter:blur(0.4px);
+}
+@keyframes mfGlow {
+  0%,100% { box-shadow: inset -12px -8px 26px rgba(0,0,0,0.5), 0 0 30px rgba(230,180,110,0.28); }
+  50%     { box-shadow: inset -12px -8px 26px rgba(0,0,0,0.5), 0 0 46px rgba(230,180,110,0.45); }
+}
+#mf-title { font-size:15px; color:#f0d060; margin:0 0 14px; letter-spacing:1px; }
+#mf-scores { text-align:left; margin-bottom:12px; }
+.mf-score-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 4px; border-bottom:1px dashed #24344a; font-size:13px; color:#c8d4e8;
+}
+.mf-score-row.winner { color:#f0d060; font-weight:bold; border-bottom-color:#5a4a1a; }
+.mf-score-row .mf-num { font-variant-numeric:tabular-nums; }
+#mf-highlights {
+  text-align:left; font-size:11px; color:#8aa0c0; line-height:1.7;
+  background:rgba(255,255,255,0.03); border-radius:5px; padding:8px 10px; margin-bottom:14px;
+}
+#mf-highlights div { margin-bottom:1px; }
+#mf-replay {
+  width:100%; padding:9px 12px; background:#1a2a4a; border:1px solid #c8963a;
+  border-radius:4px; color:#f0d060; font-size:13px; font-weight:bold; cursor:pointer;
+}
+#mf-replay:hover { background:#2a3a5a; }
+
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:#080e1a; }
+::-webkit-scrollbar-thumb { background:#2a3a5a; border-radius:2px; }
+
+/* ===== カード拡大モーダル ===== */
+#card-zoom {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.85); z-index:300;
+  align-items:center; justify-content:center;
+  cursor:pointer;
+}
+#card-zoom.show { display:flex; }
+#card-zoom-inner {
+  width:171px; height:267px;
+  border-radius:8px; border:2px solid #c8b86a;
+  overflow:hidden; position:relative;
+  box-shadow:0 0 40px rgba(200,184,106,0.5);
+}
+#card-zoom-inner img { width:100%; height:100%; object-fit:cover; }
+#card-zoom-inner .zoom-num {
+  position:absolute; top:6px; left:8px;
+  font-size:20px; font-weight:bold; color:#fff;
+  text-shadow:0 0 6px #000;
+}
+
+/* ===== レスポンシブ（スマホ幅） ===== */
+@media (max-width: 760px) {
+  body { height: auto; min-height: 100vh; overflow-y: auto; overflow-x: hidden; }
+  #main { flex-direction: column; overflow: visible; }
+
+  #hand-col {
+    width: 100%; order: 2;
+    max-height: none;
+  }
+  #hand-area { max-height: 40vh; overflow-y: auto; }
+
+  #obs-area { order: 1; width: 100%; }
+  #obs-wrap-human { padding: 60px 40px; }
+  .obs-human-large { width: 220px; height: 220px; }
+  .obs-human-large .obs-top { top: -65px; height: 60px; }
+  .obs-human-large .obs-bottom { bottom: -65px; height: 60px; }
+  .obs-human-large .obs-left { left: -45px; width: 40px; }
+  .obs-human-large .obs-right { right: -45px; width: 40px; }
+
+  #ai-sidebar {
+    order: 3; width: 100%; flex-direction: row;
+    overflow-x: auto; overflow-y: hidden; border-left: none;
+    border-top: 1px solid #1e2a3e;
+  }
+  .player-block { flex-shrink: 0; width: 160px; }
+
+  #header h1 { font-size: 13px; }
+  #log-area { height: 40px; }
+
+  /* 文字が小さすぎる箇所をスマホ用に拡大 */
+  body { font-size: 15px; }
+  .edge-label { font-size: 11px !important; }
+  .card .cnum { font-size: 13px !important; }
+  #hand-area .card .cnum { font-size: 20px !important; }
+  .area-label { font-size: 12px !important; }
+  .slot-name { font-size: 11px !important; }
+  .slot-val { font-size: 16px !important; }
+  .player-label { font-size: 13px !important; }
+  .strategy-badge, .gold-badge { font-size: 11px !important; }
+  .log-e { font-size: 13px !important; }
+  #action-panel h3 { font-size: 13px !important; }
+  .abtn { font-size: 13px !important; padding: 8px 10px !important; }
+  #mbox h2 { font-size: 16px !important; }
+  #mbox p { font-size: 14px !important; }
+  .mbtn { font-size: 14px !important; padding: 10px 12px !important; }
+  .rule-chip, .rule-chip b, .rule-note { font-size: 12px !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>木星に向かう12のステップ</h1>
+  <div class="status">
+    <span id="rnd">ラウンド 1</span>　<span id="phase">準備中</span>
+    <button type="button" id="help-btn" onclick="showRulesModal()" title="遊び方">？</button>
+  </div>
+</div>
+
+<div id="main">
+
+  <!-- 左：手札（上）＋出す場（下） -->
+  <div id="hand-col">
+    <div class="area-label">手札 <span id="hc-human">12</span>枚　<span class="score" id="sc-human">0点</span></div>
+    <div id="hand-area"></div>
+    <!-- 出す場（左下） -->
+    <div id="center-area">
+      <div id="played-area">
+        <div class="played-slot">
+          <div class="slot-name">あなた</div>
+          <div class="card face-down" id="pc-human"><span style="font-size:9px;color:#334">?</span></div>
+          <div class="slot-val" id="pv-human">-</div>
+        </div>
+        <div class="played-slot">
+          <div class="slot-name">AI 1</div>
+          <div class="card face-down" id="pc-ai1"><span style="font-size:9px;color:#334">?</span></div>
+          <div class="slot-val" id="pv-ai1">-</div>
+        </div>
+        <div class="played-slot">
+          <div class="slot-name">AI 2</div>
+          <div class="card face-down" id="pc-ai2"><span style="font-size:9px;color:#334">?</span></div>
+          <div class="slot-val" id="pv-ai2">-</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div id="discard-wrap">
+          <div class="area-label">捨て札 <span id="disc-cnt">0</span>枚</div>
+          <div class="card face-down" id="disc-top"><span style="font-size:8px;color:#334">捨て札</span></div>
+        </div>
+        <div id="deck-wrap">
+          <div class="area-label">山札 <span id="deck-count">-</span>枚</div>
+        </div>
+      </div>
+      <div id="action-panel">
+        <h3 id="ap-title">待機中</h3>
+        <div id="ap-btns"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中央：人間天文台（上） -->
+  <div id="obs-area">
+    <div class="player-block">
+      <div class="player-label" id="lbl-human">あなた</div>
+      <div id="obs-wrap-human">
+        <div class="observatory obs-human-large" id="obs-human">
+          <div class="obs-board" id="obs-board-human" onclick="toggleObsBoard()">
+            <div class="obs-bg"></div>
+            <div class="obs-center" id="oc-human">天文台</div>
+          </div>
+          <div class="obs-edge obs-top"    id="oe-human-top"><div class="bonus-tile bonus-tile-jupiter unclaimed" id="bt-human-top" title="木星衛星ボーナス +7点"></div></div>
+          <div class="obs-edge obs-left"   id="oe-human-left"><div class="bonus-tile bonus-tile-mars unclaimed" id="bt-human-left" title="火星衛星ボーナス +3点"></div></div>
+          <div class="obs-edge obs-right"  id="oe-human-right"></div>
+          <div class="obs-edge obs-bottom" id="oe-human-bottom"></div>
+          <div class="obs-center" id="oc-human">天文台</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 右サイドバー：AI1・AI2縦並び -->
+  <div id="ai-sidebar">
+    <div class="player-block" id="block-ai1">
+      <div class="player-label" id="lbl-ai1">AI 1　<span class="score" id="sc-ai1">0点</span></div>
+      <div class="ai-status-row">
+        <span id="strategy-ai1" class="strategy-badge" style="color:#5a9a5a;">戦法B（攻撃・上段）</span>
+        <span id="gold-ai1" class="gold-badge">🌑 通常</span>
+      </div>
+      <div id="obs-wrap-ai1">
+        <div class="observatory obs-ai" id="obs-ai1">
+          <div class="obs-bg"></div>
+          <div class="obs-edge obs-top"    id="oe-ai1-top"><div class="bonus-tile bonus-tile-jupiter unclaimed" id="bt-ai1-top" title="木星衛星ボーナス +7点"></div></div>
+          <div class="obs-edge obs-left"   id="oe-ai1-left"><div class="bonus-tile bonus-tile-mars unclaimed" id="bt-ai1-left" title="火星衛星ボーナス +3点"></div></div>
+          <div class="obs-edge obs-right"  id="oe-ai1-right"></div>
+          <div class="obs-edge obs-bottom" id="oe-ai1-bottom"></div>
+          <div class="obs-center" id="oc-ai1">天文台</div>
+        </div>
+      </div>
+      <div class="area-label">手札 <span id="hc-ai1">12</span>枚</div>
+    </div>
+    <div class="player-block" id="block-ai2">
+      <div class="player-label" id="lbl-ai2">AI 2　<span class="score" id="sc-ai2">0点</span></div>
+      <div class="ai-status-row">
+        <span id="strategy-ai2" class="strategy-badge" style="color:#5a7aaa;">戦法A（堅実・下段）</span>
+        <span id="gold-ai2" class="gold-badge">🌑 通常</span>
+      </div>
+      <div id="obs-wrap-ai2">
+        <div class="observatory obs-ai" id="obs-ai2">
+          <div class="obs-bg"></div>
+          <div class="obs-edge obs-top"    id="oe-ai2-top"><div class="bonus-tile bonus-tile-jupiter unclaimed" id="bt-ai2-top" title="木星衛星ボーナス +7点"></div></div>
+          <div class="obs-edge obs-left"   id="oe-ai2-left"><div class="bonus-tile bonus-tile-mars unclaimed" id="bt-ai2-left" title="火星衛星ボーナス +3点"></div></div>
+          <div class="obs-edge obs-right"  id="oe-ai2-right"></div>
+          <div class="obs-edge obs-bottom" id="oe-ai2-bottom"></div>
+          <div class="obs-center" id="oc-ai2">天文台</div>
+        </div>
+      </div>
+      <div class="area-label">手札 <span id="hc-ai2">12</span>枚</div>
+    </div>
+  </div><!-- /ai-sidebar -->
+  </div><!-- /obs-area -->
+
+</div><!-- /main -->
+
+<!-- ログ：画面下部・横スクロール -->
+<div id="log-area">
+  <h3>ログ</h3>
+  <div id="log-list"></div>
+</div>
+
+<!-- カード拡大モーダル -->
+<div id="card-zoom">
+  <div id="card-zoom-inner">
+    <img id="card-zoom-img" src="">
+    <div class="zoom-num" id="card-zoom-num"></div>
+  </div>
+</div>
+
+<!-- モーダル -->
+<div id="modal">
+  <div id="mbox">
+    <h2 id="m-title"></h2>
+    <p id="m-desc"></p>
+    <div id="m-extra"></div>
+    <div id="m-btns"></div>
+  </div>
+</div>
+
+<!-- ゲーム終了モーダル（木星到達演出） -->
+<div id="modal-final">
+  <div id="mfbox">
+    <div id="mf-planet"></div>
+    <h2 id="mf-title">🪐 木星に到達した！</h2>
+    <div id="mf-scores"></div>
+    <div id="mf-highlights"></div>
+    <button type="button" id="mf-replay">もう一度遊ぶ</button>
+  </div>
+</div>
+
+<script>
+// ========== 定数 ==========
+var EDGES = ['top','right','bottom','left'];
+
+var AREA_LABEL = {
+  launch:'発射台', construction:'建設', contact:'交信',
+  development:'開発', encounter:'遭遇', award:'顕彰'
+};
+
+var OBS_LAYOUT = {
+  gray: { top:'development', right:'launch', bottom:'construction', left:'contact' },
+  gold: { top:'award',       right:'launch', bottom:'development',  left:'encounter' }
+};
+
+var SUMMARY = {
+  gray: { top:3, mid:2, bot:1 },
+  gold: { top:4, mid:3, bot:2 }
+};
+
+var PH = { DEAL:'deal', RESOLVE:'resolve', ACTION:'action', WAIT_AI:'wait_ai', OVER:'over' };
+
+// 開発エリア（灰色）の「2枚以上」判定は表向きカードのみをカウントする
+// （一度裏向きになったカードは開発エリアのカウントから除外される仕様変更）
+function faceUpCount(stack){
+  return (stack||[]).filter(function(c){ return c && c.faceUp; }).length;
+}
+
+// ========== カードデータ（ダミー） ==========
+var ALL_CARDS = [];
+(function(){
+  var front = { top:0, right:1, bottom:0, left:-4 };
+  var back  = { top:1, right:5, bottom:10, left:2 };
+  for(var i=1;i<=56;i++){
+    ALL_CARDS.push({
+      id:i, value:i,
+      front: Object.assign({},front),
+      back:  Object.assign({},back),
+      faceUp:true
+    });
+  }
+})();
+
+// ========== ゲーム状態 ==========
+var G = null;
+
+function initGame(){
+  var deck = ALL_CARDS.map(function(c){
+    return { id:c.id, value:c.value, front:Object.assign({},c.front), back:Object.assign({},c.back), faceUp:true };
+  });
+  for(var i=deck.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var tmp=deck[i]; deck[i]=deck[j]; deck[j]=tmp;
+  }
+
+  function makePlayer(name,isHuman){
+    return { name:name, isHuman:isHuman, hand:[], obs:{ isGold:false, stacks:{top:[],right:[],bottom:[],left:[]} } };
+  }
+
+  var players = [makePlayer('あなた',true), makePlayer('AI 1',false), makePlayer('AI 2',false)];
+
+  // 初期ロケット2枚を発射台へ
+  players.forEach(function(p){
+    var le=launchEdge(p.obs);
+    for(var k=0;k<2;k++){ var c=deck.pop(); if(c){ c.faceUp=true; p.obs.stacks[le].push(c); } }
+  });
+
+  // スタートプレイヤー決定
+  var startIdx=0, maxV=-1;
+  players.forEach(function(p,i){
+    var le=launchEdge(p.obs); var st=p.obs.stacks[le]; var top=st[st.length-1];
+    if(top && top.value>maxV){ maxV=top.value; startIdx=i; }
+  });
+
+  // 手札12枚
+  players.forEach(function(p){ for(var k=0;k<12;k++){ var c=deck.pop(); if(c) p.hand.push(c); } });
+
+  G = { players:players, deck:deck, discard:[], round:1, startIdx:startIdx,
+        phase:PH.DEAL, played:[], order:[], opos:0, pendingAi:null,
+        playHistory:[[],[],[]],
+        jupiterBonus: null, // 木星衛星（+7点）最初にtop辺裏向き達成者のpi
+        marsBonus: null,    // 火星衛星（+3点）最初にleft辺裏向き達成者のpi
+        stats:[
+          {rankWins:[0,0,0], goldRound:null, topCards:0, leftCards:0},
+          {rankWins:[0,0,0], goldRound:null, topCards:0, leftCards:0},
+          {rankWins:[0,0,0], goldRound:null, topCards:0, leftCards:0}
+        ] };
+
+  addLog('ゲーム開始！　スタート：'+players[startIdx].name,'imp');
+  render();
+  nextStep();
+}
+
+function launchEdge(obs){
+  var layout=OBS_LAYOUT[obs.isGold?'gold':'gray'];
+  for(var e in layout){ if(layout[e]==='launch') return e; }
+  return 'right';
+}
+
+function edgeArea(obs,edge){ return OBS_LAYOUT[obs.isGold?'gold':'gray'][edge]; }
+
+function moveEdge(from,n){ return EDGES[(EDGES.indexOf(from)+n)%4]; }
+
+// 人間が上段アクションを取った場合、発射台を通過して裏向きカードがひっくり返る枚数を推定
+// これが多いほど「人間に上段を譲ると有利」な状況
+function estimateHumanFlipDamage(humanObs, steps){
+  var le = launchEdge(humanObs);
+  var li = EDGES.indexOf(le);
+  var flipCount = 0;
+  var facedownCount = 0;
+  EDGES.forEach(function(e){
+    var st = humanObs.stacks[e] || [];
+    var fi = EDGES.indexOf(e);
+    // このエッジから動かした時に発射台を通過するか
+    var passes = false;
+    for(var s=1; s<=steps; s++){
+      if((fi+s)%4 === li){ passes=true; break; }
+    }
+    st.forEach(function(card){
+      if(!card.faceUp) facedownCount++;
+      if(passes && !card.faceUp){
+        // 裏向きカードが発射台通過でひっくり返る
+        flipCount++;
+      }
+    });
+  });
+  return { flipCount: flipCount, facedownCount: facedownCount };
+}
+
+// ========== 得点計算 ==========
+var OPPOSITE = { top:'bottom', right:'left', bottom:'top', left:'right' };
+
+function calcScore(p){
+  var s=0;
+  EDGES.forEach(function(edge){
+    var cardEdge=OPPOSITE[edge];
+    (p.obs.stacks[edge]||[]).forEach(function(card){
+      s += ((card.faceUp ? card.front : card.back)[cardEdge]||0);
+    });
+  });
+  if(p.obs.isGold) s+=5;
+  s += p.hand.length*2;
+  // 衛星ボーナス
+  if(G){
+    var pi = G.players.indexOf(p);
+    if(G.jupiterBonus===pi) s+=7;
+    if(G.marsBonus===pi) s+=3;
+  }
+  return s;
+}
+
+// ========== AI強化版（得点シミュレーション） ==========
+
+// プレイヤー状態のディープコピー
+function clonePlayer(p){
+  var stacks={};
+  EDGES.forEach(function(e){
+    stacks[e]=(p.obs.stacks[e]||[]).map(function(c){
+      return {id:c.id,value:c.value,faceUp:c.faceUp,
+              front:Object.assign({},c.front),back:Object.assign({},c.back)};
+    });
+  });
+  return {
+    name:p.name, isHuman:p.isHuman,
+    hand:p.hand.map(function(c){ return {id:c.id,value:c.value,faceUp:c.faceUp,front:Object.assign({},c.front),back:Object.assign({},c.back)}; }),
+    obs:{isGold:p.obs.isGold, stacks:stacks}
+  };
+}
+
+// アクションを仮実行してスコアを返す
+function simulateAction(p, dec, playedCard, discardLen){
+  var cp = clonePlayer(p);
+  var le = launchEdge(cp.obs);
+
+  if(dec.act==='move'){
+    var fromEdge=dec.fromEdge, steps=dec.steps;
+    var toEdge=moveEdge(fromEdge,steps);
+    var fromStack=cp.obs.stacks[fromEdge]||[];
+    var mc=fromStack.length>0?fromStack.pop():null;
+
+    // 発射台通過判定
+    var fi=EDGES.indexOf(fromEdge), li=EDGES.indexOf(le);
+    var passes=false;
+    for(var s=1;s<=steps;s++){ if((fi+s)%4===li){passes=true;break;} }
+    if(passes&&mc) mc.faceUp=!mc.faceUp;
+
+    if(!cp.obs.stacks[toEdge]) cp.obs.stacks[toEdge]=[];
+    if(mc) cp.obs.stacks[toEdge].push(mc);
+
+    var area=OBS_LAYOUT[cp.obs.isGold?'gold':'gray'][toEdge];
+
+    // 建設：金色化
+    if(area==='construction'&&!cp.obs.isGold&&(cp.obs.stacks[toEdge]||[]).length>=3){
+      cp.obs.isGold=true;
+    }
+    // 開発（灰色）：表向きカードが2枚以上でplayedCardを発射台へ（裏向きはカウントしない）
+    if(area==='development'&&!cp.obs.isGold&&faceUpCount(cp.obs.stacks[toEdge])>=2&&playedCard){
+      var nle=launchEdge(cp.obs);
+      if(!cp.obs.stacks[nle]) cp.obs.stacks[nle]=[];
+      cp.obs.stacks[nle].push(Object.assign({},playedCard,{faceUp:true}));
+    }
+    // 開発（金色）：毎回playedCardを発射台へ
+    if(area==='development'&&cp.obs.isGold&&playedCard){
+      var nle2=launchEdge(cp.obs);
+      if(!cp.obs.stacks[nle2]) cp.obs.stacks[nle2]=[];
+      cp.obs.stacks[nle2].push(Object.assign({},playedCard,{faceUp:true}));
+    }
+  }
+  else if(dec.act==='develop'&&playedCard){
+    var dle=launchEdge(cp.obs);
+    if(!cp.obs.stacks[dle]) cp.obs.stacks[dle]=[];
+    cp.obs.stacks[dle].push(Object.assign({},playedCard,{faceUp:true}));
+  }
+  else if(dec.act==='swap_discard'){
+    // 捨て札最高値と手札最低値を交換
+    var mi=0; cp.hand.forEach(function(c,i){if(c.value<cp.hand[mi].value)mi=i;});
+    cp.hand.splice(mi,1);
+    // 捨て札に平均的なカードが来ると仮定（実際の捨て札最高値で代用）
+    cp.hand.push({id:0,value:dec.discVal||0,faceUp:true,front:{top:0,right:0,bottom:0,left:0},back:{top:0,right:0,bottom:0,left:0}});
+  }
+  else if(dec.act==='take_discard'){
+    cp.hand.push({id:0,value:dec.discVal||0,faceUp:true,front:{top:0,right:0,bottom:0,left:0},back:{top:0,right:0,bottom:0,left:0}});
+  }
+  // pass: 変化なし
+
+  return calcScore(cp);
+}
+
+// 手札の最低価値カードのインデックス
+function minHandIdx(hand){
+  var mi=0;
+  hand.forEach(function(c,i){ if(c.value<hand[mi].value) mi=i; });
+  return mi;
+}
+
+// 手札平均値
+function handAvg(hand){
+  if(!hand.length) return 0;
+  return hand.reduce(function(s,c){return s+c.value;},0)/hand.length;
+}
+
+// ===== 戦略ユーティリティ =====
+
+// 手札の高カード比率（value>30）
+function handHighRatio(hand){
+  if(!hand.length) return 0;
+  return hand.filter(function(c){ return c.value > 30; }).length / hand.length;
+}
+
+// 天文台の全カード枚数
+function obsCardTotal(stacks){
+  return EDGES.reduce(function(s,e){ return s+(stacks[e]||[]).length; }, 0);
+}
+
+// ===== ② 相手天文台の考慮 =====
+// 相手の進捗（top/left辺の埋まり具合、金色化状況）からビハインド/リード判定
+function getOpponentProgress(p){
+  var pi = G.players.indexOf(p);
+  var opponents = G.players.filter(function(_, i){ return i !== pi; });
+  var myScore = calcScore(p);
+  var maxOppScore = 0, maxOppTopLeft = 0, anyOppNearGold = false;
+  opponents.forEach(function(op){
+    var s = calcScore(op);
+    if(s > maxOppScore) maxOppScore = s;
+    var topLeft = (op.obs.stacks['top']||[]).length + (op.obs.stacks['left']||[]).length;
+    if(topLeft > maxOppTopLeft) maxOppTopLeft = topLeft;
+    if(!op.obs.isGold && (op.obs.stacks['bottom']||[]).length >= 2) anyOppNearGold = true;
+  });
+  return {
+    isBehind: myScore < maxOppScore,
+    deficit: maxOppScore - myScore,
+    opponentTopLeftProgress: maxOppTopLeft, // 0~7（top3+left4の目標に対する相手の進捗）
+    opponentNearGold: anyOppNearGold
+  };
+}
+
+// ===== ③ 終盤最適化 =====
+// 残り手札枚数から終盤フェーズかどうか、残り見込みターン数を判定
+function getEndgameInfo(p){
+  var minHandAcrossPlayers = Math.min.apply(null, G.players.map(function(pl){ return pl.hand.length; }));
+  var isEndgame = minHandAcrossPlayers <= 4;
+  var isCritical = minHandAcrossPlayers <= 2; // 誰かが2枚以下＝あと1-2ターンで終了
+  return {
+    isEndgame: isEndgame,
+    isCritical: isCritical,
+    estimatedTurnsLeft: minHandAcrossPlayers
+  };
+}
+
+// ===== ④ カード出しの読み合い強化：相手の傾向分析 =====
+// 過去のplayHistoryから、各プレイヤーが「高カード派」か「低カード派」かを判定
+function getPlayerTendency(pi){
+  var hist = G.playHistory[pi] || [];
+  if(hist.length < 2) return { avg: 28, highBias: 0.5 }; // データ不足時は中立値（カードは1-56想定で中央28）
+  var avg = hist.reduce(function(s,v){ return s+v; }, 0) / hist.length;
+  var highCount = hist.filter(function(v){ return v > 30; }).length;
+  return { avg: avg, highBias: highCount / hist.length };
+}
+
+// 相手が次に出すカードの予測値（傾向＋残り手札枚数から推定）
+function predictOpponentCard(pi){
+  var tendency = getPlayerTendency(pi);
+  var p = G.players[pi];
+  // 手札が少ないほど選択の自由度が下がるため、傾向への依存度を強める
+  var confidenceWeight = p.hand.length <= 3 ? 0.8 : 0.5;
+  return tendency.avg * confidenceWeight + 28 * (1-confidenceWeight);
+}
+
+// ===== 手札強度から「現実的に取れるランク」を予測する =====
+// 自分の手札の最大値/最小値と、相手2人の予測値を比較し、
+// 各ランク（上段=0/中段=1/下段=2）を取得できる見込みスコアを算出
+function getRankAchievability(p, pi){
+  if(!p.hand.length) return { top:0, mid:0, bot:0, bestRank:2 };
+  var sorted = [].concat(p.hand).sort(function(a,b){ return a.value-b.value; });
+  var myMax = sorted[sorted.length-1].value;
+  var myMin = sorted[0].value;
+  var myMid = sorted[Math.floor(sorted.length/2)].value;
+
+  var others = G.players.map(function(_,i){return i;}).filter(function(i){ return i!==pi; });
+  var preds = others.map(function(i){ return predictOpponentCard(i); });
+  var predMax = preds.length>0 ? Math.max.apply(null,preds) : 28;
+  var predMin = preds.length>0 ? Math.min.apply(null,preds) : 28;
+  var predAvg = preds.length>0 ? (preds[0]+(preds[1]||preds[0]))/2 : 28;
+
+  // 上段達成見込み：自分の最大値が相手予測最大値をどれだけ上回るか（0〜1に正規化）
+  var topScore = Math.max(0, Math.min(1, (myMax - predMax) / 20 + 0.5));
+  // 下段達成見込み：自分の最小値が相手予測最小値をどれだけ下回るか
+  var botScore = Math.max(0, Math.min(1, (predMin - myMin) / 20 + 0.5));
+  // 中段達成見込み：自分の中央値が相手予測の間に収まりそうか
+  var midScore = Math.max(0, 1 - Math.abs(myMid - predAvg) / 25);
+
+  var bestRank = 0;
+  var scores = [topScore, midScore, botScore];
+  var bestIdx = 0;
+  for(var i=1;i<3;i++){ if(scores[i] > scores[bestIdx]) bestIdx = i; }
+  bestRank = bestIdx; // 0=top,1=mid,2=bot
+
+  return { top:topScore, mid:midScore, bot:botScore, bestRank:bestRank };
+}
+
+// ===== ⑤ 妨害精度向上：相手の弱点を見て本当に効く妨害かを判定 =====
+// 妨害する価値があるか（相手が建設リーチ中、または top/left 進捗が高い場合に妨害価値が高い）
+function getSabotageValue(targetPi){
+  var target = G.players[targetPi];
+  if(!target) return 0;
+  var val = 0;
+  // 建設リーチ（2枚）なら、下段を奪うことで金色化を1ターン遅らせられる＝高価値
+  if(!target.obs.isGold && (target.obs.stacks['bottom']||[]).length === 2) val += 15;
+  // top/left進捗が高い相手の上段を奪う価値
+  var topLeft = (target.obs.stacks['top']||[]).length + (target.obs.stacks['left']||[]).length;
+  val += topLeft * 2;
+  // 相手のスコアが高いほど妨害価値が高い（リーダーを叩く）
+  val += calcScore(target) * 0.2;
+  return val;
+}
+
+// 3人中、最も妨害すべき相手を選ぶ
+function getBestSabotageTarget(myPi){
+  var targets = G.players.map(function(_, i){ return i; }).filter(function(i){ return i !== myPi; });
+  var best = targets[0], bestVal = -9999;
+  targets.forEach(function(i){
+    var v = getSabotageValue(i);
+    if(v > bestVal){ bestVal = v; best = i; }
+  });
+  return { pi: best, value: bestVal };
+}
+
+// ===== ⑥ 3人同時最適化 =====
+// 自分がどのカード強度で出すかによって、残り2人のランク分布がどう変わるかを評価
+// 簡易版：自分のカードと2人の予測値を比較し、3パターン（自分が上/中/下になる確率）を見積もる
+function simulateThreePlayerOutcome(myValue, pi){
+  var others = G.players.map(function(_, i){ return i; }).filter(function(i){ return i !== pi; });
+  var predictions = others.map(function(i){ return predictOpponentCard(i); });
+  // 自分のmyValueが2人の予測値と比べて何位になりそうか
+  var rank = 0;
+  predictions.forEach(function(pv){ if(myValue < pv) rank++; }); // 自分より大きい予測が多いほどrankが低い(=自分が下位)
+  // rank: 0=最大(上段) / 1=中間(中段) / 2=最小(下段)　※predictionsが2件の場合
+  return { estimatedRank: 2 - rank, confidence: 0.5 }; // 0=上段,1=中段,2=下段に変換
+}
+
+// ===== AI協調戦略：パートナーのAIが狙うランクを推定して役割分担する =====
+// AI1(pi=1)とAI2(pi=2)が同じランクを狙うとリソースを奪い合い両方弱くなる
+// → 一方が狙いを変えて人間を上下から挟み撃ちにする
+
+function getPartnerIntendedRank(myPi){
+  // パートナー（もう一方のAI）のpiを特定
+  var partnerPi = (myPi === 1) ? 2 : 1;
+  var partner = G.players[partnerPi];
+  if(!partner) return -1;
+
+  // パートナーの現在の天文台状況から狙いを推定（簡易版）
+  var pStacks = partner.obs.stacks;
+  var pConstStack = (pStacks['bottom']||[]).length;
+  var pLaunchSt = (pStacks[launchEdge(partner.obs)]||[]).length;
+  var pTopSt = (pStacks['top']||[]).length;
+  var pLeftSt = (pStacks['left']||[]).length;
+  var pHighRatio = handHighRatio(partner.hand);
+
+  // パートナーが金色化前
+  if(!partner.obs.isGold){
+    if(pConstStack < 2) return 2; // 建設優先→下段狙い
+    if(pLaunchSt >= 2) return 2; // 発射台が溜まっている→下段で建設へ
+    if(pHighRatio > 0.6) return 0; // ハイカード多い→上段狙い
+    return 2; // 基本は下段
+  }
+  // パートナーが金色化後
+  if(pTopSt < 3) return 0; // top埋め→上段狙い
+  if(pLeftSt < 4) return 1; // left埋め→中段狙い
+  return 0;
+}
+
+// パートナーと役割分担するためのランク調整
+// バッティングを避け、人間を挟み撃ちにする最適なランクを返す
+function getCooperativeRank(myPi, myIntended, humanPredictedRank){
+  var partnerRank = getPartnerIntendedRank(myPi);
+  if(partnerRank === -1) return myIntended; // パートナー不明なら変更なし
+
+  // バッティングしていない → そのまま
+  if(partnerRank !== myIntended) return myIntended;
+
+  // バッティングしている → 役割分担を決める
+  // 方針：人間が取りそうなランクを避けつつ、パートナーと別ランクを取る
+  // 3つのランク [0,1,2] のうち、パートナーと人間が取りそうなランク以外を選ぶ
+  var taken = [partnerRank, humanPredictedRank];
+  for(var r=0; r<=2; r++){
+    if(taken.indexOf(r) === -1) return r; // 誰も取らないランクを取る
+  }
+
+  // 全部被っている場合：人間を挟み撃ちにする
+  // どちらが上段(0)を取り、どちらが下段(2)を取るかは固定のAI番号ではなく、
+  // 「金色化・建設の進み具合」で動的に決める（建設が遅れている方が下段＝安全策を優先）
+  var partnerPi = (myPi === 1) ? 2 : 1;
+  var me = G.players[myPi], partner = G.players[partnerPi];
+  var myConstNeed = me && !me.obs.isGold ? (3 - (me.obs.stacks['bottom']||[]).length) : -1;
+  var partnerConstNeed = partner && !partner.obs.isGold ? (3 - (partner.obs.stacks['bottom']||[]).length) : -1;
+  // 建設がより必要（未金色化かつ残り枚数が多い）方が下段（安全な建設ルート）を取る
+  var iNeedConstMore = myConstNeed > partnerConstNeed;
+
+  if(humanPredictedRank === 1){
+    return iNeedConstMore ? 2 : 0; // 建設優先の方が下段、もう一方が上段
+  }
+  if(humanPredictedRank === 0){
+    return iNeedConstMore ? 2 : 1; // 建設優先の方が下段、もう一方が中段
+  }
+  return iNeedConstMore ? 1 : 0; // 建設優先の方が中段（安全）、もう一方が上段
+}
+
+
+// ある移動を行った後、天文台状態をクローンし、次の自分の番（同ランクと仮定）で
+// 最善の追加1手を仮実行した場合の最終スコアを返す
+var EDGE_VALUE_BACK_GRAY = { top:10, left:5, right:2, bottom:1 };
+var EDGE_VALUE_BACK_GOLD = { top:10, left:5, right:2, bottom:1 }; // award(top)も裏向き10点
+var EDGE_VALUE_FRONT_G   = { top:0,  left:1, right:-4, bottom:0 };
+function edgeValueGlobal(edge, faceUp, isGold){
+  if(faceUp) return EDGE_VALUE_FRONT_G[edge]||0;
+  return (isGold ? EDGE_VALUE_BACK_GOLD : EDGE_VALUE_BACK_GRAY)[edge]||0;
+}
+
+// 天文台状態のクローン（簡易版：simulateActionのclonePlayerを再利用）
+function lookaheadScore(p, firstMove, steps1, le){
+  // firstMove実行後の状態をクローン
+  var cp = clonePlayer(p);
+  var li = EDGES.indexOf(le);
+
+  function applyMove(cpObs, fromEdge, mvSteps){
+    var fi = EDGES.indexOf(fromEdge);
+    var toEdge = moveEdge(fromEdge, mvSteps);
+    var fromSt = cpObs.stacks[fromEdge]||[];
+    if(fromSt.length===0) return;
+    var card = fromSt.pop();
+    var passes=false;
+    for(var s=1;s<=mvSteps;s++){ if((fi+s)%4===li){passes=true;break;} }
+    if(passes) card.faceUp = !card.faceUp;
+    if(!cpObs.stacks[toEdge]) cpObs.stacks[toEdge]=[];
+    cpObs.stacks[toEdge].push(card);
+    if(toEdge==='bottom' && !cpObs.isGold && cpObs.stacks[toEdge].length>=3) cpObs.isGold=true;
+  }
+
+  applyMove(cp.obs, firstMove, steps1);
+
+  // 次ターンに得られるであろう最善の追加移動を簡易推定
+  // （同じランクが続くと仮定し、現状のカード配置から最良の1手を評価）
+  var faceNext = cp.obs.isGold ? 'gold' : 'gray';
+  var leNext = launchEdge(cp.obs);
+  var liNext = EDGES.indexOf(leNext);
+  var bestNext = -9999;
+  EDGES.forEach(function(e){
+    var st = cp.obs.stacks[e]||[];
+    if(st.length===0) return;
+    var card = st[st.length-1];
+    [1,2,3].forEach(function(stp){
+      var toE = moveEdge(e, stp);
+      var fi2 = EDGES.indexOf(e);
+      var passes2=false;
+      for(var s=1;s<=stp;s++){ if((fi2+s)%4===liNext){passes2=true;break;} }
+      var faceUpAfter2 = passes2 ? !card.faceUp : card.faceUp;
+      var oldV = edgeValueGlobal(e, card.faceUp, cp.obs.isGold);
+      var newV = edgeValueGlobal(toE, faceUpAfter2, cp.obs.isGold);
+      var d = newV - oldV;
+      if(d > bestNext) bestNext = d;
+    });
+  });
+  if(bestNext === -9999) bestNext = 0;
+
+  return calcScore(cp) + bestNext * 0.5; // 将来価値は割引いて加算
+}
+
+// 「狙いのランク」を決定する（0=上段狙い / 1=中段狙い / 2=下段狙い）
+// 目標：top辺に裏向き3枚(30点)、left辺に裏向き4枚(20点)
+function aiIntendedRank(p, pi){
+  var hand = p.hand;
+  var stacks = p.obs.stacks;
+  var constStack = (stacks['bottom']||[]).length;
+  var launchSt = (stacks[launchEdge(p.obs)]||[]).length;
+  var topSt = (stacks['top']||[]).length;
+  var leftSt = (stacks['left']||[]).length;
+  var obsTotal = obsCardTotal(stacks);
+  var highRatio = handHighRatio(hand);
+  var endgame = getEndgameInfo(p);
+  var oppProgress = getOpponentProgress(p);
+
+  // ===== ③ 終盤クリティカル：確実な得点を優先（高リスクな上段狙いを避ける）=====
+  if(endgame.isCritical){
+    // 自分の天文台にすでにtop/left枠が空いていて埋まる見込みがあるなら下段固定で安全に
+    if(!p.obs.isGold) return 2; // 建設が間に合わなければ仕方ないが、安全策
+    if(topSt < 3) return 0; // まだtopが埋まってないなら最後のチャンスとして上段に賭ける
+    return 2; // 埋まっていれば手札ボーナス重視で下段パス
+  }
+
+  // 終盤手札圧縮（戦法D）
+  if(obsTotal >= 4 && hand.length <= 5) return -1;
+
+  // ===== ② 相手考慮：相手がtop/left進捗でリードしているなら追い上げで上段優先 =====
+  // ただし建設2枚未満（=未だ金色化の見込みが薄い）なら、まず建設を優先する
+  if(oppProgress.isBehind && oppProgress.opponentTopLeftProgress >= 4 && !p.obs.isGold && constStack >= 2){
+    // 自分が遅れていて、かつ建設が十分進んでいる場合のみ、上段で巻き返しを狙う
+    if(launchSt === 0) return 0;
+  }
+  // 相手が金色化間近（建設2枚）→ 自分も急いで建設を進める
+  if(oppProgress.opponentNearGold && !p.obs.isGold && constStack < 2){
+    return 2;
+  }
+
+  // ラウンド終盤（6ラウンド目以降）でまだ金色化できていない場合は建設を最優先にする
+  // 発射台にカードが無ければ中段で発射台にカードを送り込み、次の下段移動に繋げる
+  if(!p.obs.isGold && G && G.round >= 6 && constStack < 3){
+    return launchSt >= 1 ? 2 : 1;
+  }
+
+  // ---- 金色化前 ----
+  if(!p.obs.isGold){
+    var devSt = faceUpCount(stacks['top']); // 灰色top=development（表向きのみカウント）
+    var bottomSt = (stacks['bottom']||[]).length;
+    var giveUpConst = (hand.length <= 4 && constStack === 0);
+
+    if(giveUpConst) return 0;
+
+    // フェーズ1：developmentに1枚以上溜まるまで上段（3歩）を狙う
+    // （旧：2枚以上を条件にしていたが、建設着手が遅れ金色化率が大幅に下がるため1枚に緩和）
+    if(devSt < 1) return 0;
+
+    // フェーズ2：developmentが1枚以上 → 中段で建設を進める
+    if(devSt >= 1 && constStack < 3){
+      // シミュレーション検証：発射台4台待ちだと金色化失敗率が約45%と高く、
+      // 2台まで緩和しても他戦略への悪影響は誤差範囲内（AI側の勝率が上昇）
+      if(launchSt >= 2) return 2;
+      if(constStack === 2 && launchSt >= 1) return 2;
+      return 1;
+    }
+  }
+
+  // ---- 金色化後：top辺(award)・left辺(encounter)に裏向きカードを集める ----
+  // top辺(award)：裏向き10点×3枚=30点が目標
+  // left辺(encounter)：裏向き5点×4枚=20点が目標
+  if(p.obs.isGold){
+    if(hand.length >= 8 && !oppProgress.isBehind) return 2;
+
+    var achiev = getRankAchievability(p, pi);
+
+    // ===== 金色化後の正しい経路 =====
+    // top(award)着地：bottom→2歩(下段)、left→3歩(中段)
+    // left(encounter)着地：right→3歩(中段)発射台通過で裏返し
+    // 上段(4歩)は全エッジで元に戻るが発射台通過の裏返し効果がある
+
+    // top辺（顕彰）が3枚未満
+    if(topSt < 3){
+      // bottom辺にカードがあれば下段（2歩）でtop着地が最短・最確実
+      if((stacks['bottom']||[]).length > 0) return 2;
+      // left辺にカードがあれば中段（3歩）でtop着地
+      if((stacks['left']||[]).length > 0) return 1;
+      // その他：達成見込みで判断
+      if(achiev.bot >= 0.3) return 2;
+      if(achiev.mid >= 0.3) return 1;
+      return achiev.bestRank;
+    }
+
+    // left辺（遭遇）が4枚未満
+    if(leftSt < 4){
+      // 発射台にカードがあれば中段（3歩）でleft着地・裏返し
+      if((stacks[le]||[]).length > 0) return 1;
+      if(achiev.mid >= 0.3) return 1;
+      return achiev.bestRank;
+    }
+
+    // 両方充足：さらなる得点積み増し
+    return achiev.bot >= 0.3 ? 2 : achiev.bestRank;
+  }
+
+  // 金色化前フォールバック：下段で建設を進める
+  return 2;
+}
+
+// aiIntendedRankに協調戦略を適用したラッパー
+function aiIntendedRankCooperative(p, pi){
+  var intended = aiIntendedRank(p, pi);
+  if(intended === -1) return -1; // 圧縮モードはそのまま
+
+  // Gが初期化されていない場合はそのまま返す
+  if(!G || !G.players) return intended;
+
+  // 人間が次に出しそうなランクを推定
+  var human = G.players[0];
+  if(!human || !human.hand || human.hand.length === 0) return intended;
+
+  var humanAchiev = getRankAchievability(human, 0);
+  var humanPredictedRank = humanAchiev ? humanAchiev.bestRank : 1;
+
+  // パートナーとバッティングしていれば役割分担
+  var cooperative = getCooperativeRank(pi, intended, humanPredictedRank);
+
+  // ただし天文台の緊急事情がある場合は協調より優先
+  var stacks = p.obs.stacks;
+  var constStack = (stacks['bottom']||[]).length;
+  var endgame = getEndgameInfo(p);
+  if(endgame.isCritical) return intended;
+  if(!p.obs.isGold && constStack === 2 && (stacks[launchEdge(p.obs)]||[]).length > 0) return 2;
+
+  return cooperative;
+}
+
+// 手札からカードを選ぶ
+// 「狙いのランク」と「実際に取れる見込み」を両方考慮してカードを選ぶ
+function aiPickCard(p){
+  if(!p.hand.length) return null;
+  var sorted = [].concat(p.hand).sort(function(a,b){ return a.value-b.value; });
+  var handSize = p.hand.length;
+  var pi = G.players.indexOf(p);
+  var opponentPlayed = G.played.filter(function(e){ return e.pi!==pi; });
+  var opponentMax = opponentPlayed.length>0 ? Math.max.apply(null,opponentPlayed.map(function(e){return e.card.value;})) : 0;
+  var opponentMin = opponentPlayed.length>0 ? Math.min.apply(null,opponentPlayed.map(function(e){return e.card.value;})) : 999;
+
+  var intendedRank = aiIntendedRankCooperative(p, pi);
+  var endgameInfo = getEndgameInfo(p);
+  var oppProg = getOpponentProgress(p);
+  var achiev = getRankAchievability(p, pi);
+
+  // まだ出していない相手のpi一覧（読み合い・予測対象）
+  var notYetPlayed = G.players.map(function(_,i){return i;}).filter(function(i){
+    return i!==pi && !G.played.some(function(e){return e.pi===i;});
+  });
+  var predictedRemaining = notYetPlayed.map(function(i){ return predictOpponentCard(i); });
+  var predictedMax = predictedRemaining.length>0 ? Math.max.apply(null,predictedRemaining) : 0;
+
+  // 圧縮モード（戦法D）
+  if(intendedRank === -1) return sorted[0];
+
+  // ===== 達成見込み補正：実際の出牌状況を見て現実的なランクに切り替え =====
+  var effectiveRank = intendedRank;
+
+  if(opponentPlayed.length > 0){
+    // 相手が既に出している → 実際の数値で判断
+    var canWinTop = sorted[sorted.length-1].value > opponentMax;
+    var canWinBot = sorted[0].value < opponentMin;
+
+    // 下段狙いだが相手がすでに低いカードを出していて自分の最小値でも勝てない
+    // → 低カードを無駄に消費せず上段（開発戦略）に切り替える
+    if(effectiveRank === 2 && !canWinBot){
+      effectiveRank = 0;
+    }
+  } else {
+    // 最初に出す場合：予測ベースの補正
+    if(intendedRank === 0 && achiev.top < 0.25 && achiev.bot > 0.6){
+      effectiveRank = 2;
+    } else if(intendedRank === 0 && achiev.top < 0.25 && achiev.mid > 0.5){
+      effectiveRank = 1;
+    } else if(intendedRank === 2 && achiev.bot < 0.2 && achiev.top > 0.6){
+      effectiveRank = 0;
+    }
+  }
+
+  // ===== 貴重な低カード保護 =====
+  // 5以下の低カードは「発射台通過で裏返す」「開発→顕彰ルートで2歩移動」など
+  // 天文台操作の要として将来使うべき重要牌。下段争いで消費しない。
+  if(effectiveRank === 2 && opponentPlayed.length > 0 && sorted[0].value >= opponentMin){
+    // 最小カードでも相手に勝てない → 上段に切り替えて低カードを温存
+    effectiveRank = 0;
+  }
+
+  // ===== ③終盤クリティカル：絶対取りたいランクは最大/最小カードを惜しみなく投入 =====
+  if(endgameInfo.isCritical && effectiveRank === 0){
+    if(opponentPlayed.length > 0){
+      for(var i=0; i<sorted.length; i++){
+        if(sorted[i].value > opponentMax) return sorted[i];
+      }
+      return sorted[sorted.length-1];
+    }
+    return sorted[sorted.length-1];
+  }
+
+  // ---- 上段狙い（rank=0）----
+  if(effectiveRank === 0){
+    if(opponentPlayed.length > 0){
+      // 全員に勝てる最小コストカード（予測残り相手も加味）
+      var safetyMargin = predictedRemaining.length>0 ? Math.max(0, predictedMax - opponentMax) : 0;
+      for(var i=0; i<sorted.length; i++){
+        if(sorted[i].value > opponentMax && sorted[i].value > opponentMax + safetyMargin*0.3){
+          return sorted[i];
+        }
+      }
+      for(var i=0; i<sorted.length; i++){
+        if(sorted[i].value > opponentMax) return sorted[i];
+      }
+      // 上段は取れない → 人間を中段に押し込む妨害戦略
+      // 人間が出したカードを特定して、その直上を出すことで人間を中段に追い込む
+      var humanPlayed = G.played.find(function(e){ return e.pi===0; });
+      if(humanPlayed){
+        var hv = humanPlayed.card.value;
+        // 人間の直上（+1〜+10）を出して人間を中段に押し込む
+        for(var i=0; i<sorted.length; i++){
+          if(sorted[i].value > hv && sorted[i].value < hv+10){ return sorted[i]; }
+        }
+      }
+      // 勝てない場合：ビハインドが大きければ最大で押し込む、そうでなければ妨害
+      if(oppProg.isBehind && oppProg.deficit > 8){
+        return sorted[sorted.length-1];
+      }
+      // 精密妨害：本当に叩くべき相手のカードに割り込む
+      var sabotage = getBestSabotageTarget(pi);
+      var sabCard = G.played.find(function(e){ return e.pi===sabotage.pi; });
+      if(sabotage.value > 10 && sabCard){
+        var stv = sabCard.card.value;
+        for(var i=0; i<sorted.length; i++){
+          if(sorted[i].value > stv && sorted[i].value < stv+12){ return sorted[i]; }
+        }
+      }
+      // 通常妨害
+      for(var i=0; i<sorted.length; i++){
+        if(sorted[i].value > opponentMin && sorted[i].value < opponentMin+12){ return sorted[i]; }
+      }
+      return sorted[sorted.length-1];
+    }
+    // 最初に出す場合：予測相手の強さに応じて高さを調整
+    // ===== 初手妨害：人間を中段に追い込む、または上段を譲って裏向きカードをひっくり返させる =====
+    if(opponentPlayed.length === 0 && predictedRemaining.length > 0){
+      var humanObs = G.players[0].obs;
+      var humanTendency = getPlayerTendency(0);
+      var humanPredicted = predictOpponentCard(0);
+      var otherAiPi = (pi === 1) ? 2 : 1;
+      var otherAiPredicted = predictOpponentCard(otherAiPi);
+
+      // ===== 人間の裏向きカードをひっくり返す「上段譲渡」戦略 =====
+      var humanSteps = humanObs.isGold ? 4 : 3;
+      var flipDamage = estimateHumanFlipDamage(humanObs, humanSteps);
+      // 人間の裏向きが2枚以上、かつ上段を取ると1枚以上ひっくり返る → 上段を譲る
+      if(flipDamage.facedownCount >= 2 && flipDamage.flipCount >= 1){
+        var myTopSt = faceUpCount(p.obs.stacks['top']);
+        // 自分のtopが既に2枚埋まっているか、ひっくり返るカードが2枚以上なら積極的に譲る
+        if(myTopSt >= 2 || flipDamage.flipCount >= 2){
+          // 人間予測値より低いカードを出して人間に上段を取らせる
+          for(var i=sorted.length-1; i>=0; i--){
+            if(sorted[i].value < humanPredicted - 2){
+              return sorted[i];
+            }
+          }
+        }
+      }
+
+      // 人間がハイカード傾向 → 人間より少し低い値で中段に押し込む
+      if(humanTendency.highBias > 0.55){
+        var targetVal = humanPredicted - 3;
+        for(var i=sorted.length-1; i>=0; i--){
+          if(sorted[i].value < targetVal && sorted[i].value > targetVal - 15){
+            return sorted[i];
+          }
+        }
+      }
+
+      // 人間がローカード傾向 → 中位カードで人間の下段を奪う
+      if(humanTendency.highBias < 0.4 && effectiveRank === 0){
+        for(var i=0; i<sorted.length; i++){
+          if(sorted[i].value > humanPredicted && sorted[i].value < otherAiPredicted){
+            return sorted[i];
+          }
+        }
+      }
+    }
+
+    // ===== 温存戦術：上段は「確実に勝てる最小のカード」で取り、余った強カードを将来に残す =====
+    // 十分な安全マージン（+20）を確保できるカードがあればそれを使う。
+    // ビハインドが大きい時・手札が少ない時は無理せず従来の比率方式に任せる（安全マージンの精度が落ちるため）。
+    if(predictedRemaining.length > 0 && handSize >= 5 && !(oppProg.isBehind && oppProg.deficit > 8)){
+      var predMaxForTop = Math.max.apply(null, predictedRemaining);
+      var neededMargin = 20; // シミュレーションで検証済みの安全マージン（人間役1人+AIパートナー2人の構成で再検証し、20が最適に近いことを確認済み）
+      for(var i=0; i<sorted.length; i++){
+        if(sorted[i].value >= predMaxForTop + neededMargin){
+          return sorted[i];
+        }
+      }
+    }
+    var hiRatio = oppProg.isBehind ? 0.85 : 0.75;
+    if(predictedRemaining.length===2){
+      var predAvg2 = (predictedRemaining[0]+predictedRemaining[1])/2;
+      if(predAvg2 > 32) hiRatio = Math.min(0.95, hiRatio+0.1);
+    }
+    var hi = handSize<=4 ? handSize-1 : Math.floor(handSize*hiRatio);
+    return sorted[Math.min(hi, sorted.length-1)];
+  }
+
+  // ---- 下段狙い（rank=2）----
+  if(effectiveRank === 2){
+    if(opponentPlayed.length > 0){
+      for(var i=sorted.length-1; i>=0; i--){
+        if(sorted[i].value < opponentMin) return sorted[i];
+      }
+      return sorted[0];
+    }
+    // 最初に出す場合：予測の最小値より十分低いカードを選ぶ
+    // ===== 初手妨害：人間が下段狙いなら競争、上段狙いなら関係なく最小を出す =====
+    if(predictedRemaining.length===2){
+      var predMin2 = Math.min.apply(null, predictedRemaining);
+      // 人間が下段狙い傾向なら、人間より更に低いカードを出して確実に下段を奪う
+      var humanBias2 = getPlayerTendency(0).highBias;
+      if(humanBias2 < 0.4){
+        // 人間も低カードを出してくる → 自分は更に低いカードで確実に下段取得
+        for(var i=0; i<sorted.length; i++){
+          if(sorted[i].value < predMin2 - 5) return sorted[i];
+        }
+      }
+      for(var i=0; i<sorted.length; i++){
+        if(sorted[i].value < predMin2-3) return sorted[i];
+      }
+    }
+    return sorted[0];
+  }
+
+  // ---- 中段狙い（rank=1）----
+  if(opponentPlayed.length > 0){
+    for(var i=0; i<sorted.length; i++){
+      if(sorted[i].value > opponentMin && sorted[i].value < opponentMax){ return sorted[i]; }
+    }
+  }
+  // 最初に出す場合：予測値の間に収まるカードを狙う
+  // ===== 初手妨害：人間を中段に追い込む（中段狙いの場合）=====
+  if(predictedRemaining.length===2){
+    var predLo = Math.min.apply(null, predictedRemaining);
+    var predHi = Math.max.apply(null, predictedRemaining);
+    // 人間予測値の直上を出して、人間が中段に落ちるよう誘導
+    var humanPred3 = predictOpponentCard(0);
+    for(var i=0; i<sorted.length; i++){
+      if(sorted[i].value > humanPred3 && sorted[i].value < humanPred3 + 10){
+        return sorted[i]; // 人間より少し高い → 人間が中段、自分が上段か中上段
+      }
+    }
+    for(var i=0; i<sorted.length; i++){
+      if(sorted[i].value > predLo && sorted[i].value < predHi){ return sorted[i]; }
+    }
+  }
+  var mid = Math.floor(handSize*0.5);
+  return sorted[Math.min(mid, sorted.length-1)];
+}
+
+// ===== アクション決定 =====
+// rank = 実際に取れたランク（0=上/1=中/2=下）
+// intendedRank と比較して「狙い通り」「外れ」で行動を分岐
+function aiDecide(p, rank, playedCard){
+  var face = p.obs.isGold ? 'gold' : 'gray';
+  var tier = rank===0 ? 'top' : rank===1 ? 'mid' : 'bot';
+  var steps = SUMMARY[face][tier];
+  var le = launchEdge(p.obs);
+  var li = EDGES.indexOf(le);
+  var stacks = p.obs.stacks;
+  var constStack = (stacks['bottom']||[]).length;
+  var launchSt = (stacks[le]||[]).length;
+  var candidates = EDGES.filter(function(e){ return (stacks[e]||[]).length>0; });
+  var opp = {top:'bottom', right:'left', bottom:'top', left:'right'};
+  var pi = G.players.indexOf(p);
+
+  // 狙いとの一致判定
+  var intended = aiIntendedRankCooperative(p, pi);
+  if(intended === -1) intended = 2; // 圧縮モードは下段相当
+  var hitIntended = (rank === intended);
+  var missedHigh = (intended === 0 && rank > 0);  // 上段狙いで外れた
+  var missedLow  = (intended === 2 && rank < 2);  // 下段狙いで外れた（上か中を取ってしまった）
+
+  // 達成見込み（次の行動判断に活用）
+  var achiev = getRankAchievability(p, pi);
+
+  // ===== エッジの絶対得点価値 =====
+  // top辺（灰色=development / 金色=award）：裏向き = back.bottom = 10点
+  // left辺（灰色=contact / 金色=encounter）：裏向き = back.right = 5点
+  // right辺（発射台）：裏向き = back.left = 2点
+  // bottom辺（灰色=construction / 金色=development）：裏向き = back.top = 1点
+  // ※金色のtop(award)も裏向きなら10点。ゲーム終了まで留まれば高得点になる重要エリア
+  var EDGE_VALUE_BACK  = { top:10, left:5, right:2, bottom:1 };
+  var EDGE_VALUE_FRONT = { top:0,  left:1, right:-4, bottom:0 };
+
+  function edgeValue(edge, faceUp){
+    return faceUp ? (EDGE_VALUE_FRONT[edge]||0) : (EDGE_VALUE_BACK[edge]||0);
+  }
+
+  // 得点変化計算：「移動後の絶対価値」－「移動前の絶対価値」
+  function calcDelta(fromEdge){
+    var fromSt = stacks[fromEdge]||[];
+    if(fromSt.length===0) return -9999;
+    var card = fromSt[fromSt.length-1];
+    var fi = EDGES.indexOf(fromEdge);
+    var toEdge = moveEdge(fromEdge, steps);
+    var passes = false;
+    for(var s=1;s<=steps;s++){ if((fi+s)%4===li){passes=true;break;} }
+    var faceUpAfter = passes ? !card.faceUp : card.faceUp;
+
+    var oldVal = edgeValue(fromEdge, card.faceUp);
+    var newVal = edgeValue(toEdge, faceUpAfter);
+    var delta = newVal - oldVal;
+
+    var toArea = OBS_LAYOUT[face][toEdge];
+
+    // 金色化ボーナス（建設3枚目）
+    if(!p.obs.isGold && toArea==='construction'){
+      if(constStack===2) delta += 100;
+      else if(constStack===1) delta += 20;
+      else delta += 5;
+    }
+
+    // 金色後：開発エリアでplayedCardを発射台へ送れる
+    if(p.obs.isGold && toArea==='development' && playedCard) delta += edgeValue(le, true);
+
+    // ===== 開発エリア集中投資（灰色のみ）=====
+    // top辺(development)に2枚未満なら、そこへカードを送り込むこと自体に戦略的価値がある
+    // （一度2枚以上溜まれば、以後development到着のたびにplayedCardが自動で発射台供給源になる）
+    if(!p.obs.isGold && toArea==='development'){
+      var curDevSt = faceUpCount(stacks['top']);
+      if(curDevSt < 2){
+        delta += 12; // まだ2枚に届いていないので、埋めることに投資価値あり
+      } else if(playedCard){
+        delta += 8; // 既に2枚以上＝到着のたびにplayedCardが発射台へ供給される実利
+      }
+    }
+
+    // 発射台は通過点として価値低め（すでに裏返し効果は計上済み）
+    if(toArea==='launch') delta -= 1;
+
+    return delta;
+  }
+
+  // 全候補の最善移動（top辺・left辺への裏向き配置を最優先＋2手先シミュレーション）
+  var endgameInfo = getEndgameInfo(p);
+  var oppProg = getOpponentProgress(p);
+
+  function bestMoveFrom(candidateList){
+    if(candidateList.length===0){
+      // 動かせるカードがない → passまたはdevelopにフォールバック
+      if(playedCard && tier==='bot' && !p.obs.isGold) return {act:'develop'};
+      return {act:'pass'};
+    }
+    var scored = candidateList.map(function(e){
+      var d = calcDelta(e);
+      var toEdge = moveEdge(e, steps);
+      var fi = EDGES.indexOf(e);
+      var passes = false;
+      for(var s=1;s<=steps;s++){ if((fi+s)%4===li){passes=true;break;} }
+      var card = (stacks[e]||[]).slice(-1)[0];
+      var faceUpAfter = card ? (passes ? !card.faceUp : card.faceUp) : true;
+      // top辺・left辺に裏向きで着地する手を大幅ボーナス
+      // 灰色top=development、金色top=award、どちらも裏向き10点の高得点エリア
+      if(toEdge==='top' && !faceUpAfter) d += 20;
+      if(toEdge==='left' && !faceUpAfter) d += 10;
+
+      // ===== 衛星ボーナス争奪：未取得なら大幅ボーナスを加算 =====
+      if(toEdge==='top' && !faceUpAfter && G.jupiterBonus===null){
+        d += 21; // 🪐木星衛星（+7点）がまだ取られていない→最優先で狙う
+      }
+      if(toEdge==='left' && !faceUpAfter && G.marsBonus===null){
+        d += 9; // 🔴火星衛星（+3点）がまだ取られていない→積極的に狙う
+      }
+      // 発射台（right）通過で裏返る手にもボーナス（将来top/leftへ送れる）
+      if(passes && card && card.faceUp) d += 5;
+
+      // ===== 裏向きカードを表に戻すリスクペナルティ =====
+      // 裏向きカードが発射台通過で表向きに戻ってしまう手は大幅ペナルティ
+      if(passes && card && !card.faceUp){
+        var currentVal = edgeValue(e, false);
+        d -= Math.max(15, currentVal * 3); // 現在価値の3倍以上のペナルティ
+      }
+      // ===== 発射台滞留防止（調整版）=====
+      // 金色化前：序盤は発射台に3枚以上溜めてから一気に動かす方が効率的
+      // ただし相手が金色化間近・リードしている等の事情があれば前倒しで動かす
+      // 金色化後：発射台から動かす時、移動先が再び発射台になるケース（4歩）は除外
+      if(e === le){
+        var launchCount = (stacks[le]||[]).length;
+        var toEdgeFromLaunch = moveEdge(le, steps);
+        var returnsToLaunch = (toEdgeFromLaunch === le); // 4歩で発射台に戻る場合
+        if(returnsToLaunch){
+          d -= 10; // 発射台→発射台は意味がない
+        } else if(p.obs.isGold){
+          d += 25; // 金色化後は有効な移動先なら最優先
+        } else if(launchCount >= 3){
+          d += 25; // 3枚以上溜まっていれば動かす好機
+        } else if(oppProg.isBehind && oppProg.deficit > 10){
+          d += 15; // ビハインドが大きい時は待たずに動かして手数を稼ぐ
+        } else if(oppProg.opponentNearGold){
+          d += 15; // 相手が金色化間近なら自分も急ぐ
+        } else {
+          d -= 5; // 序盤は待つ方針
+        }
+      }
+
+      // ===== カードの重なり順管理：表向きカードが下に埋まらないよう配慮 =====
+      // 移動先のエッジに既にカードがある場合、一番上（最後）のカードが表向きなら
+      // その上に更にカードを重ねると表向きカードが下に埋もれてしまう（損）
+      var toSt = stacks[toEdge]||[];
+      if(toSt.length > 0){
+        var topOfStack = toSt[toSt.length-1];
+        // 移動先の一番上が表向き → その上に積むのは避けたい
+        if(topOfStack.faceUp){
+          d -= 8; // 表向きカードの上に積むのはペナルティ
+        }
+        // 移動先の一番上が裏向き → 問題なし（裏向きの上に積む）
+      }
+
+      // ===== 中盤準備戦略：金色化前に表向きカードを各エッジにバラまく =====
+      // 建設が2枚（リーチ）の時、発射台以外のエッジにも表向きカードを配置しておくと
+      // 金色化後の選択肢が広がる
+      if(!p.obs.isGold && constStack >= 2){
+        var emptyEdges = EDGES.filter(function(eg){
+          return eg !== le && (stacks[eg]||[]).length === 0;
+        });
+        // 空きエッジへの移動にボーナス（選択肢を広げる投資）
+        if(emptyEdges.indexOf(toEdge) >= 0) d += 6;
+      }
+
+      // ===== 遭遇 vs 顕彰の状況判断 =====
+      // 金色化後：顕彰(top=10点)vs遭遇(left=5点)の優先度を状況で判断
+      if(p.obs.isGold){
+        var topSt2 = (stacks['top']||[]).length;
+        var leftSt2 = (stacks['left']||[]).length;
+        // topが3枚未満かつleftが4枚以上 → topを最優先
+        if(toEdge==='top' && !faceUpAfter && topSt2 < 3 && leftSt2 >= 4) d += 15;
+        // leftが4枚未満かつtopが3枚以上 → leftも積極的に
+        if(toEdge==='left' && !faceUpAfter && leftSt2 < 4 && topSt2 >= 3) d += 10;
+        // 両方不足：topを優先（10点 > 5点）
+        if(toEdge==='top' && !faceUpAfter && topSt2 < 3 && leftSt2 < 4) d += 12;
+        if(toEdge==='left' && !faceUpAfter && leftSt2 < 4 && topSt2 < 3) d += 6;
+      }
+      if(!endgameInfo.isCritical){
+        var future = lookaheadScore(p, e, steps, le);
+        var current = calcScore(p);
+        d += (future - current) * 0.4; // 将来価値を割引いて加算（近視眼の是正）
+      }
+
+      // ===== ②相手考慮：自分がビハインドなら高リスク高得点手を優先 =====
+      if(oppProg.isBehind && (toEdge==='top' || toEdge==='left') && !faceUpAfter){
+        d += oppProg.deficit * 0.3; // ビハインドが大きいほど逆転手を評価
+      }
+      // 自分がリードしているなら安全策（established edgeを崩さない）を優先
+      if(!oppProg.isBehind && oppProg.deficit < -10){
+        // 大幅リード時はリスクを避け、確実なdeltaのみ評価（将来価値の重みを下げる）
+        d -= (faceUpAfter && (toEdge==='top'||toEdge==='left')) ? 5 : 0;
+      }
+
+      // ===== ③終盤最適化：確定得点を重視し、不確実な経由地は減点 =====
+      if(endgameInfo.isCritical){
+        // 残り手番が少ないので、直接top/leftに届く手以外は大幅減点
+        if(toEdge!=='top' && toEdge!=='left') d -= 8;
+        // 確実にtop/leftに裏向きで届く手は最優先
+        if((toEdge==='top'||toEdge==='left') && !faceUpAfter) d += 15;
+      } else if(endgameInfo.isEndgame){
+        if((toEdge==='top'||toEdge==='left') && !faceUpAfter) d += 8;
+      }
+
+      return {act:'move', steps:steps, fromEdge:e, delta:d};
+    }).sort(function(a,b){return b.delta-a.delta;});
+    return scored[0];
+  }
+
+  if(candidates.length===0) return {act:'move', steps:steps, fromEdge:le};
+
+  // ======================================================
+  // 【金色化前】
+  // ======================================================
+  if(!p.obs.isGold){
+
+    // ===== 建設戦略を諦めるかどうかの判断 =====
+    // 手札が少ない（残り4枚以下）→ 金色化してもtop/leftを稼ぐ回数が足りず割に合わない
+    // シミュレーション実測：金色化後の残りラウンドが0〜1だと平均点12.87点
+    // （金色化に失敗した場合の平均19.39点より低い＝終盤の駆け込み建設は逆に損）
+    // → 建設が何枚進んでいても、残り手札が少なければ諦めてtop/left直取りに切り替える
+    var totalRockets = EDGES.reduce(function(s,e){ return s+(stacks[e]||[]).length; }, 0);
+    var giveUpConstruction = (p.hand.length <= 4);
+
+    // --- 下段（tier=bot / 1歩） ---
+    if(tier==='bot'){
+      // 建設戦略を諦めた場合：top辺・left辺への最善移動を優先
+      if(giveUpConstruction){
+        var bm0 = bestMoveFrom(candidates);
+        if(playedCard) return bm0.delta > 2 ? bm0 : {act:'develop'};
+        return bm0;
+      }
+
+      // 発射台→建設（1歩）：ロケットが1台でもあれば建設へ送る
+      // （旧：2台待ちだったが、実測で「下段を取った時点の発射台は1台が61%」を占め、
+      //   その約3割で建設に送らず足踏みしていたため1台に緩和。金色化失敗率を大幅に改善）
+      if((stacks[le]||[]).length>0){
+        var te1 = moveEdge(le,1);
+        if(OBS_LAYOUT['gray'][te1]==='construction'){
+          if(launchSt >= 1){
+            // ロケット1台以上 → 建設へ送る
+            return {act:'move', steps:1, fromEdge:le};
+          } else if(constStack === 2){
+            // リーチ状態なら3台でも建設へ（金色化目前）
+            return {act:'move', steps:1, fromEdge:le};
+          }
+        }
+      }
+      // 発射台が空なら開発でロケット補充
+      if(playedCard && (stacks[le]||[]).length === 0) return {act:'develop'};
+
+      // ===== 初手・序盤：developmentが空の場合、手札構成で判断 =====
+      var devStBot = faceUpCount(stacks['top']);
+      if(playedCard && devStBot === 0 && constStack < 2){
+        // 手札に高カード（30以上）が3枚以上ある → 次の上段が取れる見込みあり → develop
+        var highCards = p.hand.filter(function(c){ return c.value > 30; }).length;
+        if(highCards >= 3){
+          return {act:'develop'}; // 上段サイクルを早く始動
+        }
+        // 高カードが少ない → 上段を取れる見込みが薄い → 建設1歩で確実に進める
+        // （bestMoveFromに委ねる）
+      }
+
+      var bm = bestMoveFrom(candidates);
+      if(playedCard) return bm.delta > 2 ? bm : {act:'develop'};
+      return bm;
+    }
+
+    // --- 中段（tier=mid）---
+    // 中段サマリー特権：「移動」か「捨て札から1枚取得（取るだけ）」かを選択
+    if(tier==='mid'){
+      // ===== 発射台詰まり解消：発射台の一番上が「既に裏向き」なら最優先でleftへ運ぶ =====
+      // 発射台→2歩でleft（contact）着地。このルートは発射台を再度通過しないため表裏は変化しない。
+      // つまり発射台の一番上が既に裏向きの場合のみ、left到着で裏向き5点＋火星衛星ボーナスを確定できる。
+      // 表向きのまま送ってしまうと火星衛星の権利を無駄に使ってしまうため、
+      // 表向きの場合はここで強制せずbestMoveFromの汎用評価に委ねる（他の候補と比較して選ばせる）。
+      var launchTopCardMid2 = (stacks[le]||[]).length>0 ? stacks[le][stacks[le].length-1] : null;
+      if(launchSt >= 2 && constStack === 0 && launchTopCardMid2 && !launchTopCardMid2.faceUp){
+        return {act:'move', steps:steps, fromEdge:le};
+      }
+
+      // ===== ロケット製造緊急対応 =====
+      var devStNow = faceUpCount(stacks['top']);
+      if(playedCard && (stacks[le]||[]).length === 0 && devStNow < 2 && constStack < 2){
+        return {act:'develop'};
+      }
+
+      // 建設が2枚（リーチ）で発射台が空：developでロケット補充を最優先
+      if(constStack===2 && (stacks[le]||[]).length===0 && playedCard){
+        return {act:'develop'};
+      }
+
+      // 移動した場合の最善手を評価
+      var moveBest = candidates.length>0 ? bestMoveFrom(candidates) : null;
+
+      // 捨て札取得（サマリー特権）の価値を評価
+      var takeValue = -9999, takeIdx = -1;
+      if(G.discard.length>0){
+        G.discard.forEach(function(c,i){ if(c.value > takeValue){ takeValue=c.value; takeIdx=i; } });
+      }
+
+      // 建設未充足なら、発射台が空でplayedCardがあればロケット補充を優先
+      if(constStack < 3 && (stacks[le]||[]).length===0 && playedCard){
+        return {act:'develop'};
+      }
+
+      // 移動の価値 vs 取得の価値を比較
+      var takeScore = takeIdx>=0 ? takeValue * 0.15 + 2 : -9999;
+      if(takeIdx>=0){
+        var sabTarget = getBestSabotageTarget(pi);
+        if(sabTarget.value > 8) takeScore += sabTarget.value * 0.1;
+      }
+      var moveScore = moveBest ? moveBest.delta : -9999;
+
+      if(takeScore > moveScore && takeIdx>=0){
+        return {act:'take_discard', discIdx:takeIdx};
+      }
+      if(moveBest) return moveBest;
+      if(takeIdx>=0) return {act:'take_discard', discIdx:takeIdx};
+      return {act:'move', steps:steps, fromEdge:le};
+    }
+
+    // --- 上段（tier=top / 3歩）---
+    // 最強ルート：発射台(right)から3歩でdevelopment(top)着地を最優先
+    if(tier==='top'){
+      // ===== 発射台に「既に裏向きの」カードがあれば3歩（right→top）着地を最優先 =====
+      // これが木星衛星（top辺への裏向き初着地）を実際に獲得できる唯一のルート。
+      // このルートは移動中に発射台を通過しない（＝表裏は変化しない）ため、
+      // 発射台のカードが既に裏向きでなければtopへ送っても表向きのまま＝10点を取り逃す。
+      // その場合は無理にこのルートを強制せず、bestMoveFromの汎用評価に委ねる。
+      if((stacks[le]||[]).length > 0){
+        var toEdgeFromLaunch = moveEdge(le, steps);
+        var launchTopCard = stacks[le][stacks[le].length-1];
+        if(OBS_LAYOUT['gray'][toEdgeFromLaunch]==='development' && launchTopCard && !launchTopCard.faceUp){
+          return {act:'move', steps:steps, fromEdge:le};
+        }
+      }
+
+      // ===== 木星衛星争奪の仕込み：発射台が空、かつbottom辺の一番上が「表向き」の時だけ発射台へ送り込む =====
+      // bottom→3歩＝right（発射台）止まり・裏返しのみ（topには届かない）。
+      // 表向きカードを裏返して発射台に置くことで、次ターンの発射台→top（裏向き）ルートに繋げる。
+      // ※bottomの一番上が既に裏向きの場合にこれをやると表向きに戻ってしまい損なので行わない。
+      var bottomTopCard = (stacks['bottom']||[]).length>0 ? stacks['bottom'][stacks['bottom'].length-1] : null;
+      if((stacks[le]||[]).length === 0 && G && G.jupiterBonus===null && bottomTopCard && bottomTopCard.faceUp){
+        return {act:'move', steps:steps, fromEdge:'bottom'};
+      }
+
+      // 建設が2枚（リーチ）で発射台が空：developでロケット補充
+      if(constStack===2 && (stacks[le]||[]).length===0 && playedCard){
+        return {act:'develop'};
+      }
+      return bestMoveFrom(candidates);
+    }
+  }
+
+  // ======================================================
+  // 【金色化後】
+  // ======================================================
+  if(p.obs.isGold){
+
+    // --- 下段（tier=bot / 2歩）---
+    if(tier==='bot'){
+      // ===== top辺（顕彰）が不足：bottom→2歩→top着地を最優先 =====
+      // このルートは発射台を経由しない（＝表裏は変化しない）ため、
+      // bottomの一番上が既に裏向きの場合のみ、topに裏向き10点で届く。表向きなら強制しない。
+      var botTopCard = (stacks['bottom']||[]).length>0 ? stacks['bottom'][stacks['bottom'].length-1] : null;
+      if((stacks['top']||[]).length < 3 && botTopCard && !botTopCard.faceUp){
+        return {act:'move', steps:steps, fromEdge:'bottom'};
+      }
+      // 手札温存パス判断
+      if(hitIntended && p.hand.length >= 7){
+        if(achiev.top >= 0.5 && (stacks['top']||[]).length < 3){
+          return bestMoveFrom(candidates);
+        }
+        return {act:'pass'};
+      }
+      return bestMoveFrom(candidates);
+    }
+
+    // --- 中段（tier=mid / 3歩）---
+    if(tier==='mid'){
+      // ===== top辺（顕彰）が不足：発射台(right)から3歩でtop着地が正しいルート =====
+      // right→bottom→left→top（発射台起点なので通過フラグは立たない＝表裏は変化しない）。
+      // 発射台の一番上が既に裏向きの場合のみ、topに裏向き10点で届く。表向きなら強制しない。
+      // ※以前は fromEdge:'left' を使っていたが、left+3歩の実際の着地はbottomでありtopには届かないバグだった
+      if((stacks['top']||[]).length < 3 && (stacks[le]||[]).length > 0){
+        var toEdgeFromLaunchMid = moveEdge(le, steps);
+        var launchTopCardMid = stacks[le][stacks[le].length-1];
+        if(toEdgeFromLaunchMid === 'top' && launchTopCardMid && !launchTopCardMid.faceUp){
+          return {act:'move', steps:steps, fromEdge:le};
+        }
+      }
+      // left辺（遭遇）着地や他の状況はbestMoveFromの汎用評価に委ねる
+      return bestMoveFrom(candidates);
+    }
+
+    // --- 上段（tier=top / 4歩）---
+    if(tier==='top'){
+      // 顕彰(top)に表向きカードがある → 4歩で裏返すことを最優先
+      // gold: any→...→top(award) の4歩で裏返る経路を探す
+      var flipCandidates = candidates.filter(function(e){
+        var toE = moveEdge(e, steps);
+        var fi2 = EDGES.indexOf(e);
+        var passes2 = false;
+        for(var s2=1;s2<=steps;s2++){ if((fi2+s2)%4===li){passes2=true;break;} }
+        var topCard = (stacks[e]||[]).slice(-1)[0];
+        // 発射台通過で裏返り、toEdgeがtop(award)に着地するカード
+        return topCard && topCard.faceUp && passes2 && toE==='top';
+      });
+      if(flipCandidates.length > 0){
+        // 表向きカードを裏返してawardに着地 → 10点確定
+        return {act:'move', steps:steps, fromEdge:flipCandidates[0]};
+      }
+      // 通常の最善移動
+      return bestMoveFrom(candidates);
+    }
+  }
+
+  // フォールバック
+  return bestMoveFrom(candidates);
+}
+
+// ========== 自動シミュレーションエンジン ==========
+// UIを一切更新せず、純粋にゲームを高速で自動実行する
+
+function simOneGame(){
+  // デッキ生成・シャッフル
+  var deck = ALL_CARDS.map(function(c){
+    return {id:c.id,value:c.value,front:Object.assign({},c.front),back:Object.assign({},c.back),faceUp:true};
+  });
+  for(var i=deck.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1)); var tmp=deck[i]; deck[i]=deck[j]; deck[j]=tmp;
+  }
+
+  function makeSimPlayer(name){
+    return {name:name,isHuman:false,hand:[],obs:{isGold:false,stacks:{top:[],right:[],bottom:[],left:[]}}};
+  }
+  var players=[makeSimPlayer('S0'),makeSimPlayer('S1'),makeSimPlayer('S2')];
+
+  // 初期ロケット2枚
+  players.forEach(function(p){
+    var le=launchEdge(p.obs);
+    for(var k=0;k<2;k++){var c=deck.pop();if(c){c.faceUp=true;p.obs.stacks[le].push(c);}}
+  });
+
+  // 手札12枚ずつ配布
+  for(var h=0;h<12;h++) players.forEach(function(p){var c=deck.pop();if(c) p.hand.push(c);});
+
+  var discard=[];
+  var playHistory=[[],[],[]];
+  var round=1;
+  var MAX_ROUNDS=50; // 無限ループ防止
+  // 衛星ボーナス（本番のexecActionと同じ判定をシミュレーションでも再現する）
+  var jupiterBonus=null, marsBonus=null;
+
+  // ゲーム状態をGに一時退避して関数を使うのは危険なので、簡易版を直接実装
+  function simLaunchEdge(obs){ return launchEdge(obs); }
+  function simMoveEdge(from,n){ return moveEdge(from,n); }
+  function simCalcScore(p){
+    var savedG = G;
+    G = {players:players, jupiterBonus:jupiterBonus, marsBonus:marsBonus};
+    var s = calcScore(p);
+    G = savedG;
+    return s;
+  }
+
+  // AIカード選択（既存のaiPickCardを使うためにGを一時設定）
+  function simPickCard(p, pi, played, hist){
+    var savedG = G;
+    G = {players:players, played:played, discard:discard, round:round, playHistory:hist,
+         jupiterBonus:jupiterBonus, marsBonus:marsBonus};
+    var card = aiPickCard(p);
+    G = savedG;
+    return card;
+  }
+
+  // AIアクション決定
+  function simDecide(p, pi, rank, playedCard){
+    var savedG = G;
+    G = {players:players, played:[], discard:discard, round:round, playHistory:playHistory,
+         jupiterBonus:jupiterBonus, marsBonus:marsBonus};
+    var dec = aiDecide(p, rank, playedCard);
+    G = savedG;
+    return dec;
+  }
+
+  // 移動実行（簡易版execAction）
+  function simExecAction(p, pi, rank, dec, playedCard){
+    var face = p.obs.isGold?'gold':'gray';
+    var tier = rank===0?'top':rank===1?'mid':'bot';
+    var steps = SUMMARY[face][tier];
+    var le = simLaunchEdge(p.obs);
+    var li = EDGES.indexOf(le);
+    var noDiscard = false;
+
+    if(dec.act==='move' && dec.fromEdge){
+      var fromEdge=dec.fromEdge, st=p.obs.stacks[fromEdge]||[];
+      if(st.length>0){
+        var card=st.pop();
+        var fi=EDGES.indexOf(fromEdge);
+        var passes=false;
+        for(var s=1;s<=steps;s++){if((fi+s)%4===li){passes=true;break;}}
+        if(passes) card.faceUp=!card.faceUp;
+        var toEdge=simMoveEdge(fromEdge,steps);
+        if(!p.obs.stacks[toEdge]) p.obs.stacks[toEdge]=[];
+        p.obs.stacks[toEdge].push(card);
+        // 衛星ボーナス判定（本番のexecActionと同じロジック）
+        if(!card.faceUp && toEdge==='top' && jupiterBonus===null){ jupiterBonus = pi; }
+        if(!card.faceUp && toEdge==='left' && marsBonus===null){ marsBonus = pi; }
+        // 建設完成で金色化
+        if(toEdge==='bottom' && !p.obs.isGold && p.obs.stacks['bottom'].length>=3) p.obs.isGold=true;
+        // エリア効果
+        var area=OBS_LAYOUT[p.obs.isGold?'gold':'gray'][toEdge];
+        if(area==='development' && !p.obs.isGold && faceUpCount(p.obs.stacks[toEdge])>=2 && playedCard){
+          var nl=simLaunchEdge(p.obs); if(!p.obs.stacks[nl]) p.obs.stacks[nl]=[];
+          p.obs.stacks[nl].push(Object.assign({},playedCard,{faceUp:true})); noDiscard=true;
+        }
+        if(area==='development' && p.obs.isGold && playedCard){
+          var nl2=simLaunchEdge(p.obs); if(!p.obs.stacks[nl2]) p.obs.stacks[nl2]=[];
+          p.obs.stacks[nl2].push(Object.assign({},playedCard,{faceUp:true})); noDiscard=true;
+        }
+        if(area==='encounter' && discard.length>0){
+          var t=discard.splice(discard.length-1,1)[0]; p.hand.push(t);
+        }
+        if(area==='contact' && discard.length>0 && p.hand.length>0){
+          var dc3=discard.splice(discard.length-1,1)[0]; var minI=0;
+          p.hand.forEach(function(c,i){if(c.value<p.hand[minI].value)minI=i;});
+          discard.push(p.hand.splice(minI,1)[0]); p.hand.push(dc3);
+        }
+      }
+    } else if(dec.act==='develop' && playedCard){
+      var dle=simLaunchEdge(p.obs); if(!p.obs.stacks[dle]) p.obs.stacks[dle]=[];
+      p.obs.stacks[dle].push(Object.assign({},playedCard,{faceUp:true})); noDiscard=true;
+    } else if(dec.act==='take_discard' && discard.length>0){
+      var idx=dec.discIdx!==undefined?dec.discIdx:discard.length-1;
+      if(idx<discard.length){var tk=discard.splice(idx,1)[0]; p.hand.push(tk);}
+    }
+    // 捨て札処理
+    if(!noDiscard && playedCard) discard.push(playedCard);
+  }
+
+  // メインゲームループ
+  while(round <= MAX_ROUNDS){
+    // 全員手札が尽きていればゲーム終了
+    if(players.every(function(p){return p.hand.length===0;})) break;
+
+    // カード出し順（手番はroundと人数でシンプルにローテーション）
+    var played=[];
+    var order=[0,1,2]; // 全員同時に出す（簡易化）
+
+    order.forEach(function(pi){
+      var p=players[pi];
+      if(p.hand.length===0) return;
+      var card=simPickCard(p, pi, played, playHistory);
+      if(!card) return;
+      p.hand.splice(p.hand.indexOf(card),1);
+      played.push({pi:pi,card:card});
+      playHistory[pi].push(card.value);
+    });
+
+    if(played.length===0) break;
+
+    // ランク決定（降順ソート：最大=0位=上段、最小=2位=下段）
+    played.sort(function(a,b){return b.card.value-a.card.value;});
+
+    played.forEach(function(entry,rankIdx){
+      var pi=entry.pi, p=players[pi], playedCard=entry.card;
+      var dec=simDecide(p, pi, rankIdx, playedCard);
+      simExecAction(p, pi, rankIdx, dec, playedCard);
+    });
+
+    // ゲーム終了判定：誰かの手札が0
+    if(players.some(function(p){return p.hand.length===0;})) break;
+    round++;
+  }
+
+  return {scores: players.map(function(p){ return simCalcScore(p); }),
+          jupiterBonus: jupiterBonus, marsBonus: marsBonus};
+}
+
+function runAutoSimulation(numGames){
+  var wins=[0,0,0], totalScores=[0,0,0];
+  var jupClaims=[0,0,0], marsClaims=[0,0,0], jupUnclaimed=0, marsUnclaimed=0;
+  for(var g=0;g<numGames;g++){
+    var result=simOneGame();
+    var scores=result.scores;
+    var maxScore=Math.max.apply(null,scores);
+    scores.forEach(function(s,i){
+      totalScores[i]+=s;
+      if(s===maxScore) wins[i]++;
+    });
+    if(result.jupiterBonus!==null) jupClaims[result.jupiterBonus]++; else jupUnclaimed++;
+    if(result.marsBonus!==null) marsClaims[result.marsBonus]++; else marsUnclaimed++;
+  }
+  var el=document.getElementById('sim-results');
+  var st=document.getElementById('sim-status');
+  if(!el||!st) return;
+  st.textContent=numGames+'戦完了';
+  var names=['AI-S0','AI-S1','AI-S2'];
+  el.innerHTML=names.map(function(n,i){
+    var wr=Math.round(wins[i]/numGames*100);
+    var avg=Math.round(totalScores[i]/numGames*10)/10;
+    var jupPct=Math.round(jupClaims[i]/numGames*100);
+    var marsPct=Math.round(marsClaims[i]/numGames*100);
+    return '<div>'+n+'：勝率<b style="color:#ffd700">'+wr+'%</b>　平均<b>'+avg+'点</b>　'
+      +'🪐'+jupPct+'%　🔴'+marsPct+'%</div>';
+  }).join('')
+  + '<div>木星衛星 未確定：'+Math.round(jupUnclaimed/numGames*100)+'%　'
+    + '火星衛星 未確定：'+Math.round(marsUnclaimed/numGames*100)+'%</div>';
+}
+
+
+function nextStep(){
+  if(!G) return;
+  if(G.phase===PH.DEAL) dealPhase();
+  else if(G.phase===PH.RESOLVE) resolvePhase();
+  else if(G.phase===PH.WAIT_AI) setTimeout(doAiTurn,700);
+}
+
+// 現在出番のプレイヤーインデックス（時計回り）
+function currentDealPi(){
+  var n=G.players.length;
+  for(var i=0;i<n;i++){
+    var pi=(G.startIdx+i)%n;
+    if(!G.played.find(function(e){return e.pi===pi;})){
+      return pi;
+    }
+  }
+  return -1; // 全員出し終わり
+}
+
+function dealPhase(){
+  var pi=currentDealPi();
+  if(pi===-1){ startResolve(); return; }
+
+  var p=G.players[pi];
+  if(p.isHuman){
+    // 人間の番：手札クリックを待つ
+    render();
+    setAP('手札からカードを選んでください',[]);
+    addLog('あなたの番：手札をクリックしてください','you');
+  } else {
+    // AIの番：少し待ってから出す
+    G.phase=PH.WAIT_AI;
+    G.pendingAi={pi:pi, mode:'deal'};
+    render();
+    nextStep();
+  }
+}
+
+function doAiTurn(){
+  var pa=G.pendingAi;
+  if(pa.mode==='deal'){
+    var p=G.players[pa.pi];
+    var card=aiPickCard(p);
+    p.hand.splice(p.hand.indexOf(card),1);
+    G.played.push({pi:pa.pi,card:card});
+    G.playHistory[pa.pi].push(card.value);
+    addLog(p.name+'が'+card.value+'を出した','ai');
+    G.phase=PH.DEAL;
+    render();
+    setTimeout(nextStep,300);
+  } else {
+    // アクション実行（既存）
+    doAiAction();
+  }
+}
+
+function humanPlay(idx){
+  if(G.phase!==PH.DEAL) return;
+  var pi=currentDealPi();
+  if(pi!==0) return; // 人間の番でない
+  if(G.played.find(function(e){return e.pi===0;})) return;
+  var p=G.players[0];
+  var card=p.hand.splice(idx,1)[0];
+  G.played.push({pi:0,card:card});
+  G.playHistory[0].push(card.value);
+  addLog('あなたは'+card.value+'を出した','you');
+  G.phase=PH.DEAL;
+  render();
+  setTimeout(nextStep,200);
+}
+
+function startResolve(){
+  G.phase=PH.RESOLVE;
+  var sorted=[].concat(G.played).sort(function(a,b){return b.card.value-a.card.value;});
+  G.order=sorted.map(function(e){return e.pi;});
+  G.opos=0;
+  addLog('比較：'+sorted.map(function(e){return G.players[e.pi].name+'('+e.card.value+')';}).join(' > '),'imp');
+  render();
+  nextStep();
+}
+
+function resolvePhase(){
+  if(G.opos>=G.order.length){ endRound(); return; }
+  var pi=G.order[G.opos]; var p=G.players[pi]; var rank=G.opos;
+  // 統計記録
+  if(G.stats && G.stats[pi]) G.stats[pi].rankWins[rank]++;
+  if(p.isHuman){ G.phase=PH.ACTION; showHumanAction(p,rank); render(); }
+  else { G.phase=PH.WAIT_AI; G.pendingAi={pi:pi,rank:rank,mode:'action'}; render(); nextStep(); }
+}
+
+function doAiAction(){
+  var pi=G.pendingAi.pi; var rank=G.pendingAi.rank; var p=G.players[pi];
+  var pe=G.played.find(function(e){return e.pi===pi;});
+  var dec=aiDecide(p,rank,pe?pe.card:null);
+  // デバッグログ
+  var face=p.obs.isGold?'金':'灰';
+  var tier=rank===0?'上':rank===1?'中':'下';
+  var stackInfo='建設:'+((p.obs.stacks['bottom']||[]).length)+'枚';
+  var intended=aiIntendedRankCooperative(p,pi);
+  var intendedStr=intended===-1?'圧縮':intended===0?'上':intended===1?'中':'下';
+  var hitMiss=(rank===intended||(intended===-1))?'●':'×'+intendedStr+'狙→'+tier+'段';
+  addLog('[AI'+pi+' '+face+' 狙:'+intendedStr+'→実:'+tier+'段 '+hitMiss+'] '+dec.act+(dec.fromEdge?' from:'+dec.fromEdge:'')+'　'+stackInfo);
+  execAction(pi,rank,dec,pe?pe.card:null);
+}
+
+function showHumanAction(p,rank){
+  var face=p.obs.isGold?'gold':'gray';
+  var tier=rank===0?'top':rank===1?'mid':'bot';
+  var steps=SUMMARY[face][tier];
+  var pe=G.played.find(function(e){return e.pi===0;});
+  var pc=pe?pe.card:null;
+  var btns=[];
+  var label=(rank===0?'上':rank===1?'中':'下')+'段';
+
+  // 移動：天文台のカードをタップして選ぶ
+  btns.push({label:'ロケットを'+steps+'辺移動（天文台のカードをタップ）', primary:true, fn:function(){
+    enterCardSelectMode(0,rank,steps,pc);
+  }});
+
+  // 中段サマリー特権：灰色のみ「移動」か「捨て札から1枚取る」の選択肢あり
+  // 金色化後の中段は3歩移動のみ（捨て札取得の選択肢なし）
+  if(tier==='mid' && !p.obs.isGold && G.discard.length>0){
+    btns.push({label:'捨て札から1枚取る（中段アクション特権）', fn:function(){
+      showDiscardSelectUI(0,rank,pc,'take');
+    }});
+  }
+  if(tier==='bot' && !p.obs.isGold && pc){
+    btns.push({label:'ロケットの開発（'+pc.value+'を発射台へ）', fn:function(){
+      G.phase=PH.RESOLVE; execAction(0,rank,{act:'develop'},pc);
+    }});
+  }
+  if(tier==='bot' && p.obs.isGold){
+    btns.push({label:'パス', fn:function(){
+      G.phase=PH.RESOLVE; execAction(0,rank,{act:'pass'},pc);
+    }});
+  }
+
+  setAP('アクション選択（'+label+'）',btns);
+}
+
+// 天文台カードタップ選択モード
+var G_cardSelect = null; // {rank, steps, playedCard}
+
+function enterCardSelectMode(pi,rank,steps,playedCard){
+  var p=G.players[pi];
+  var hasCard=EDGES.some(function(e){return (p.obs.stacks[e]||[]).length>0;});
+  if(!hasCard){ G.phase=PH.RESOLVE; execAction(pi,rank,{act:'move',steps:steps},playedCard); return; }
+  G_cardSelect={rank:rank,steps:steps,playedCard:playedCard};
+  setAP('移動するロケットをタップ',[
+    {label:'キャンセル', fn:function(){ G_cardSelect=null; showHumanAction(p,rank); render(); }}
+  ]);
+  renderObs('human',p); // タップ可能状態で再描画
+}
+
+function tapObsCard(edge){
+  if(!G_cardSelect) return;
+  var rank=G_cardSelect.rank, steps=G_cardSelect.steps, playedCard=G_cardSelect.playedCard;
+  G_cardSelect=null;
+  G.phase=PH.RESOLVE;
+  execAction(0,rank,{act:'move',steps:steps,fromEdge:edge},playedCard);
+}
+
+function showCardSelectUI(pi,rank,steps,playedCard){
+  // 互換性のため残す（AIやフォールバック用）
+  if(pi===0){ enterCardSelectMode(pi,rank,steps,playedCard); return; }
+  var p=G.players[pi]; var choices=[];
+  EDGES.forEach(function(edge){
+    var st=p.obs.stacks[edge]||[];
+    if(st.length>0){
+      var top=st[st.length-1];
+      var areaName=AREA_LABEL[OBS_LAYOUT[p.obs.isGold?'gold':'gray'][edge]];
+      choices.push({ label:areaName+'の'+top.value+'（'+(top.faceUp?'表':'裏')+'）を'+steps+'辺移動',
+        fn:(function(e){ return function(){ closeModal(); G.phase=PH.RESOLVE; execAction(pi,rank,{act:'move',steps:steps,fromEdge:e},playedCard); }; })(edge) });
+    }
+  });
+  if(choices.length===0){ G.phase=PH.RESOLVE; execAction(pi,rank,{act:'move',steps:steps},playedCard); return; }
+  showModal('どのカードを移動しますか？','',choices);
+}
+
+function showDiscardSelectUI(pi,rank,playedCard,mode,excludeCard){
+  var choices=G.discard.map(function(card,i){ return {card:card, idx:i}; })
+    .filter(function(entry){
+      if(excludeCard && entry.card.id === excludeCard.id && entry.card.value === excludeCard.value) return false;
+      return true;
+    })
+    .sort(function(a,b){ return a.card.value - b.card.value; }) // 小さい順に整列
+    .map(function(entry){
+      var card=entry.card, i=entry.idx;
+      return { label:card.value+'（'+(card.faceUp?'表':'裏')+'）',
+        fn:(function(idx){ return function(){ closeModal();
+          if(mode==='take'){ G.phase=PH.RESOLVE; execAction(pi,rank,{act:'take_discard',discIdx:idx},playedCard); }
+          else { showSwapHandUI(pi,rank,playedCard,idx); }
+        }; })(i) };
+    });
+  if(choices.length===0){
+    closeModal();
+    G.phase=PH.RESOLVE;
+    execAction(pi,rank,{act:'pass'},playedCard);
+    return;
+  }
+  showModal('捨て札からどれを選びますか？','',choices);
+}
+
+function showSwapHandUI(pi,rank,playedCard,discIdx){
+  var p=G.players[pi]; var discCard=G.discard[discIdx];
+  var choices=p.hand.map(function(card,i){
+    return { label:'手札の'+card.value+'と交換',
+      fn:(function(idx){ return function(){ closeModal(); G.phase=PH.RESOLVE; execAction(pi,rank,{act:'swap_discard',handIdx:idx,discIdx:discIdx},playedCard); }; })(i) };
+  });
+  showModal('手札のどれと交換しますか？','選んだ捨て札：'+discCard.value,choices);
+}
+
+function showSwapDiscardUI(pi,rank,playedCard,excludeCard){ showDiscardSelectUI(pi,rank,playedCard,'swap',excludeCard); }
+
+// 交信エリアの交換で「どの手札カードを手放すか」を賢く選ぶ
+// 単純な最小値固定ではなく、現在の狙い（intendedRank）と手札構成を見て判断
+function chooseHandCardToSwap(p, incomingCard){
+  if(!p.hand.length) return 0;
+  var pi = G.players.indexOf(p);
+  var sorted = p.hand.map(function(c,i){ return {c:c, i:i}; }).sort(function(a,b){ return a.c.value-b.c.value; });
+  var intended = aiIntendedRankCooperative(p, pi);
+
+  // 狙いが上段（大きいカードを温存したい）→ 最小カードを手放す
+  if(intended === 0){
+    return sorted[0].i;
+  }
+  // 狙いが下段（小さいカードを温存したい）→ 最大カードを手放す
+  if(intended === 2 || intended === -1){
+    return sorted[sorted.length-1].i;
+  }
+  // 狙いが中段、または手札が極端に偏っている場合：
+  // 入ってくるカードの価値を踏まえ、手札の中で最も「使い道が薄い」カードを選ぶ
+  var highCount = p.hand.filter(function(c){ return c.value > 30; }).length;
+  var lowCount = p.hand.filter(function(c){ return c.value <= 15; }).length;
+  // ハイカードに偏りすぎていれば最大値を整理
+  if(highCount >= p.hand.length * 0.6){
+    return sorted[sorted.length-1].i;
+  }
+  // ローカードに偏りすぎていれば最小値を整理
+  if(lowCount >= p.hand.length * 0.6){
+    return sorted[0].i;
+  }
+  // それ以外は手札平均から最も離れたカードを手放す（バランス調整）
+  var avg = handAvg(p.hand);
+  var worstIdx = sorted[0].i, worstDiff = -1;
+  p.hand.forEach(function(c,i){
+    var diff = Math.abs(c.value - avg);
+    if(diff > worstDiff){ worstDiff = diff; worstIdx = i; }
+  });
+  return worstIdx;
+}
+
+function execAction(pi,rank,dec,playedCard){
+  var p=G.players[pi]; var noDiscard=false; var logType=p.isHuman?'you':'ai';
+
+  if(dec.act==='move'){
+    var fromEdge=dec.fromEdge; var steps=dec.steps; var toEdge=moveEdge(fromEdge,steps);
+    var fromStack=p.obs.stacks[fromEdge]||[];
+
+    // 移動するカードがない場合はpassとして扱う（フリーズ防止）
+    if(fromStack.length===0){
+      addLog(p.name+'：移動先にカードなし→スキップ',logType);
+      G.opos++; G.phase=PH.RESOLVE; setAP('待機中',[]); render(); setTimeout(nextStep,300);
+      return;
+    }
+
+    var movingCard=fromStack.pop();
+
+    // 発射台を通過・到着（到着も含む）したら裏返す
+    var le=launchEdge(p.obs);
+    var fi=EDGES.indexOf(fromEdge); var li=EDGES.indexOf(le);
+    var passesLaunch=false;
+    for(var s=1;s<=steps;s++){ if((fi+s)%4===li){ passesLaunch=true; break; } }
+    if(passesLaunch && movingCard){
+      movingCard.faceUp=!movingCard.faceUp;
+      addLog(p.name+'：発射台通過 → カード裏返し（'+movingCard.value+'）',logType);
+    }
+
+    if(!p.obs.stacks[toEdge]) p.obs.stacks[toEdge]=[];
+    if(movingCard) p.obs.stacks[toEdge].push(movingCard);
+
+    var area=edgeArea(p.obs,toEdge);
+    addLog(p.name+'：'+steps+'辺移動（'+AREA_LABEL[edgeArea(p.obs,fromEdge)]+'→'+AREA_LABEL[area]+'）',logType);
+
+    // ===== 衛星ボーナス判定 =====
+    // 最初にtop辺に裏向きカードを置いたプレイヤー → 木星衛星（+7点）
+    if(movingCard && !movingCard.faceUp && toEdge==='top' && G.jupiterBonus===null){
+      G.jupiterBonus = pi;
+      addLog('🪐 '+p.name+'が木星衛星ボーナス(+7点)を獲得！','imp');
+      render();
+    }
+    // 最初にleft辺に裏向きカードを置いたプレイヤー → 火星衛星（+3点）
+    if(movingCard && !movingCard.faceUp && toEdge==='left' && G.marsBonus===null){
+      G.marsBonus = pi;
+      addLog('🔴 '+p.name+'が火星衛星ボーナス(+3点)を獲得！','imp');
+      render();
+    }
+
+    // 建設：3枚→金色化
+    if(area==='construction' && !p.obs.isGold && (p.obs.stacks[toEdge]||[]).length>=3){
+      p.obs.isGold=true; addLog(p.name+'の天文台が金色になった！','imp');
+      if(G.stats && G.stats[pi] && G.stats[pi].goldRound===null) G.stats[pi].goldRound=G.round;
+    }
+
+    // 開発（灰色）：到着時に表向きが2枚以上あれば毎回playedCardを発射台へ（裏向きはカウント対象外）
+    if(area==='development' && !p.obs.isGold && faceUpCount(p.obs.stacks[toEdge])>=2 && playedCard){
+      var newLe=launchEdge(p.obs);
+      if(!p.obs.stacks[newLe]) p.obs.stacks[newLe]=[];
+      p.obs.stacks[newLe].push(Object.assign({},playedCard,{faceUp:true}));
+      addLog(p.name+'：開発エリア効果 → '+playedCard.value+'を発射台へ',logType);
+      noDiscard=true;
+    }
+
+    // 開発（金色）：止まった瞬間に出したカードを発射台へ
+    if(area==='development' && p.obs.isGold && playedCard){
+      var newLe2=launchEdge(p.obs);
+      if(!p.obs.stacks[newLe2]) p.obs.stacks[newLe2]=[];
+      p.obs.stacks[newLe2].push(Object.assign({},playedCard,{faceUp:true}));
+      addLog(p.name+'：開発エリア効果（金）→ '+playedCard.value+'を発射台へ',logType);
+      noDiscard=true;
+    }
+
+    // 遭遇（金色のみ）：捨て札から1枚手札に
+    if(area==='encounter'){
+      if(G.discard.length>0){
+        if(!p.isHuman){
+          // 自分のplayedCardがまだ捨て札に積まれていないことを保証した上で取得
+          var idxToTake = G.discard.length-1;
+          if(playedCard && G.discard[idxToTake].id===playedCard.id && G.discard[idxToTake].value===playedCard.value){
+            // 万一自分のカードが最後尾にある場合はその前のカードを探す
+            idxToTake = -1;
+            for(var di=G.discard.length-1; di>=0; di--){
+              if(!(playedCard && G.discard[di].id===playedCard.id && G.discard[di].value===playedCard.value)){ idxToTake=di; break; }
+            }
+          }
+          if(idxToTake>=0){
+            var t=G.discard.splice(idxToTake,1)[0];
+            p.hand.push(t); addLog(p.name+'：遭遇エリア効果 → '+t.value+'を手札に',logType);
+          } else {
+            addLog(p.name+'：遭遇エリア（取れるカードなし）',logType);
+          }
+        } else {
+          if(!noDiscard && playedCard) G.discard.push(playedCard);
+          G.opos++; render(); showDiscardSelectUI(pi,rank,null,'take',playedCard); return;
+        }
+      } else { addLog(p.name+'：遭遇エリア（捨て札なし）',logType); }
+    }
+
+    // 交信エリア（灰色左辺）：移動でカードが到着した場合、手札と捨て札を交換
+    if(area==='contact' && p.hand.length>0 && G.discard.length>0){
+      if(!p.isHuman){
+        var dcIdx2 = G.discard.length-1;
+        if(playedCard && G.discard[dcIdx2].id===playedCard.id && G.discard[dcIdx2].value===playedCard.value){
+          dcIdx2 = -1;
+          for(var dj2=G.discard.length-1; dj2>=0; dj2--){
+            if(!(playedCard && G.discard[dj2].id===playedCard.id && G.discard[dj2].value===playedCard.value)){ dcIdx2=dj2; break; }
+          }
+        }
+        if(dcIdx2>=0){
+          var dc2=G.discard.splice(dcIdx2,1)[0];
+          var swapHandIdx = chooseHandCardToSwap(p, dc2);
+          var oldCard = p.hand.splice(swapHandIdx,1)[0];
+          G.discard.push(oldCard); p.hand.push(dc2);
+          addLog(p.name+'：交信エリア効果 → 手札の'+oldCard.value+'と捨て札の'+dc2.value+'を交換',logType);
+        } else {
+          addLog(p.name+'：交信エリア（交換できるカードなし）',logType);
+        }
+      } else {
+        if(!noDiscard && playedCard) G.discard.push(playedCard);
+        G.opos++; render(); showSwapDiscardUI(pi,rank,null,playedCard); return;
+      }
+    } else if(area==='contact'){
+      addLog(p.name+'：交信エリア（交換できるカードなし）',logType);
+    }
+  }
+  else if(dec.act==='develop'){
+    if(playedCard){
+      var dle=launchEdge(p.obs);
+      if(!p.obs.stacks[dle]) p.obs.stacks[dle]=[];
+      p.obs.stacks[dle].push(Object.assign({},playedCard,{faceUp:true}));
+      noDiscard=true;
+      addLog(p.name+'：ロケット開発 → '+playedCard.value+'を発射台へ',logType);
+    }
+  }
+  else if(dec.act==='take_discard'){
+    if(G.discard.length>0){
+      var idx=dec.discIdx!==undefined?dec.discIdx:G.discard.length-1;
+      var tk=G.discard.splice(idx,1)[0]; p.hand.push(tk);
+      addLog(p.name+'：捨て札から'+tk.value+'を手札に',logType);
+    }
+  }
+  else if(dec.act==='swap_discard'){
+    if(G.discard.length>0 && p.hand.length>0){
+      var discIdx=dec.discIdx!==undefined?dec.discIdx:G.discard.length-1;
+      var discCard=G.discard.splice(discIdx,1)[0];
+      var handIdx=dec.handIdx!==undefined?dec.handIdx:(function(){ var mi=0; p.hand.forEach(function(c,i){ if(c.value<p.hand[mi].value) mi=i; }); return mi; })();
+      var removed=p.hand.splice(handIdx,1)[0];
+      G.discard.push(removed); p.hand.push(discCard);
+      addLog(p.name+'：手札の'+removed.value+'と捨て札の'+discCard.value+'を交換',logType);
+    }
+  }
+  else if(dec.act==='pass'){ addLog(p.name+'：パス',logType); }
+
+  if(!noDiscard && playedCard) G.discard.push(playedCard);
+  G.opos++; G.phase=PH.RESOLVE; setAP('待機中',[]); render(); setTimeout(nextStep,300);
+}
+
+function endRound(){
+  if(G.players.some(function(p){return p.hand.length===0;})){ gameOver(); return; }
+  // 前ラウンドの1位（G.order[0]）が次のスタートプレイヤー
+  if(G.order.length>0) G.startIdx=G.order[0];
+  G.round++; G.played=[]; G.order=[]; G.opos=0; G.phase=PH.DEAL;
+  addLog('--- ラウンド'+G.round+' スタート：'+G.players[G.startIdx].name+' ---','imp');
+  render(); setTimeout(nextStep,200);
+}
+
+function gameOver(){
+  G.phase=PH.OVER; render();
+  var scores=G.players.map(function(p,i){
+    return {name:p.name, score:calcScore(p), pi:i, p:p};
+  }).sort(function(a,b){return b.score-a.score;});
+
+  addLog('=== ゲーム終了 ===','imp');
+  scores.forEach(function(s){ addLog(s.name+'：'+s.score+'点'); });
+  addLog('勝者：'+scores[0].name,'imp');
+
+  // ---- プレイヤー向けハイライト（自然文） ----
+  var highlights = [];
+  highlights.push(G.jupiterBonus!==null
+    ? '🪐 木星衛星ボーナスは'+G.players[G.jupiterBonus].name+'が獲得'
+    : '🪐 木星衛星ボーナスは誰も獲得できなかった');
+  highlights.push(G.marsBonus!==null
+    ? '🔴 火星衛星ボーナスは'+G.players[G.marsBonus].name+'が獲得'
+    : '🔴 火星衛星ボーナスは誰も獲得できなかった');
+  var goldTexts = G.players.map(function(p,i){
+    var st=G.stats[i];
+    return p.name+'（'+(st.goldRound?'R'+st.goldRound+'で金色化':'金色化できず')+'）';
+  });
+  highlights.push('✨ '+goldTexts.join('　'));
+
+  showGameOverModal(scores, highlights);
+
+  // ---- 開発者向け詳細診断（プレイヤーのログには出さず、コンソールのみ） ----
+  function edgePoints(stack, edge){
+    var cardEdge = OPPOSITE[edge];
+    var faceDown=0, faceUp=0, pts=0;
+    stack.forEach(function(c){
+      var v=(c.faceUp?c.front:c.back)[cardEdge]||0;
+      pts+=v;
+      if(c.faceUp) faceUp++; else faceDown++;
+    });
+    return {pts:pts, faceUp:faceUp, faceDown:faceDown, total:stack.length};
+  }
+  var report = scores.map(function(s){
+    var st = G.stats[s.pi];
+    var p = s.p;
+    var topInfo = edgePoints(p.obs.stacks['top']||[], 'top');
+    var leftInfo = edgePoints(p.obs.stacks['left']||[], 'left');
+    var goldRound = st.goldRound ? 'R'+st.goldRound+'で金色化' : '金色化できず';
+    var rankStr = '上'+st.rankWins[0]+'回/中'+st.rankWins[1]+'回/下'+st.rankWins[2]+'回';
+    return s.name+'：'+s.score+'点\n'
+      +'  '+goldRound+'\n'
+      +'  アクション権：'+rankStr+'\n'
+      +'  top辺'+topInfo.total+'枚(裏'+topInfo.faceDown+'/表'+topInfo.faceUp+' 実質'+topInfo.pts+'点) '
+      +'left辺'+leftInfo.total+'枚(裏'+leftInfo.faceDown+'/表'+leftInfo.faceUp+' 実質'+leftInfo.pts+'点)\n'
+      +'  手札残'+p.hand.length+'枚(+'+(p.hand.length*2)+'点)';
+  }).join('\n\n');
+  console.debug('[Jupiter12 診断レポート]\n'+report);
+}
+
+// ========== ゲーム終了モーダル（木星到達演出） ==========
+function showGameOverModal(scores, highlights){
+  var rows = scores.map(function(s,i){
+    return '<div class="mf-score-row'+(i===0?' winner':'')+'">'
+      +'<span class="mf-name">'+(i===0?'🏆 ':'')+s.name+'</span>'
+      +'<span class="mf-num" data-target="'+s.score+'">0点</span></div>';
+  }).join('');
+  document.getElementById('mf-scores').innerHTML = rows;
+  document.getElementById('mf-highlights').innerHTML = highlights.map(function(h){ return '<div>'+h+'</div>'; }).join('');
+  document.getElementById('modal-final').classList.add('show');
+
+  // スコアのカウントアップ演出
+  var nums = document.querySelectorAll('#mf-scores .mf-num');
+  nums.forEach(function(el){
+    var target = parseInt(el.getAttribute('data-target'),10) || 0;
+    var duration = 700, startTime = null;
+    function step(ts){
+      if(!startTime) startTime = ts;
+      var progress = Math.min((ts-startTime)/duration, 1);
+      el.textContent = Math.round(target*progress)+'点';
+      if(progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+
+// ========== 描画 ==========
+function getAiStrategy(p, pi){
+  var intended = aiIntendedRankCooperative(p, pi);
+  if(intended === -1) return '手札圧縮';
+  if(!p.obs.isGold){
+    var devSt = (p.obs.stacks['top']||[]).length;
+    if(intended === 1) return '開発投資（top辺蓄積）';
+    if(intended === 2) return '建設優先（金色化へ）';
+    return '上段（建設加速）';
+  } else {
+    var topSt = (p.obs.stacks['top']||[]).length;
+    var leftSt = (p.obs.stacks['left']||[]).length;
+    if(p.hand.length>=8) return '手札温存';
+    if(topSt < 3) return '顕彰狙い（top埋め）';
+    if(leftSt < 4) return '遭遇狙い（left埋め）';
+    return '積み増し';
+  }
+}
+
+function render(){
+  if(!G) return;
+  var ps=G.players;
+  document.getElementById('rnd').textContent='ラウンド '+G.round;
+  document.getElementById('phase').textContent=phLbl(G.phase);
+  document.getElementById('hc-human').textContent=ps[0].hand.length;
+  document.getElementById('hc-ai1').textContent=ps[1].hand.length;
+  document.getElementById('hc-ai2').textContent=ps[2].hand.length;
+  document.getElementById('sc-human').textContent=calcScore(ps[0])+'点';
+  document.getElementById('sc-ai1').textContent=calcScore(ps[1])+'点';
+  document.getElementById('sc-ai2').textContent=calcScore(ps[2])+'点';
+
+  // 衛星ボーナスアイコン表示
+  if(G){
+    var icons = ['','',''];
+    if(G.jupiterBonus!==null) icons[G.jupiterBonus]+='🪐';
+    if(G.marsBonus!==null) icons[G.marsBonus]+='🔴';
+    document.getElementById('lbl-ai1').innerHTML='AI 1　'+icons[1]+'<span class="score" id="sc-ai1">'+calcScore(ps[1])+'点</span>';
+    document.getElementById('lbl-ai2').innerHTML='AI 2　'+icons[2]+'<span class="score" id="sc-ai2">'+calcScore(ps[2])+'点</span>';
+    // 人間のスコア表示エリアにもアイコンを
+    var humanArea = document.getElementById('sc-human');
+    if(humanArea) humanArea.textContent = icons[0]+calcScore(ps[0])+'点';
+  }
+  document.getElementById('deck-count').textContent=G.deck.length;
+  document.getElementById('disc-cnt').textContent=G.discard.length;
+
+  // 戦法バッジを動的更新
+  var s1el=document.getElementById('strategy-ai1');
+  var s2el=document.getElementById('strategy-ai2');
+  if(s1el) s1el.textContent=getAiStrategy(ps[1],1);
+  if(s2el) s2el.textContent=getAiStrategy(ps[2],2);
+
+  // 金色化状態バッジ（公開版：詳細スタックの代わりに要約のみ表示）
+  var gold1=document.getElementById('gold-ai1');
+  var gold2=document.getElementById('gold-ai2');
+  if(gold1){ gold1.textContent = ps[1].obs.isGold?'🌟 金色化':'🌑 通常'; gold1.classList.toggle('is-gold',ps[1].obs.isGold); }
+  if(gold2){ gold2.textContent = ps[2].obs.isGold?'🌟 金色化':'🌑 通常'; gold2.classList.toggle('is-gold',ps[2].obs.isGold); }
+
+  renderObs('human',ps[0]); renderObs('ai1',ps[1]); renderObs('ai2',ps[2]);
+  renderBonusTiles();
+  renderHand(ps[0]); renderPlayed();
+  resizeHandCards();
+}
+
+function toggleObsBoard(){
+  var b=document.getElementById('obs-board-human');
+  if(b) b.classList.toggle('expanded');
+}
+
+function phLbl(ph){
+  return {deal:'カードを出す',resolve:'解決中',action:'アクション選択',wait_ai:'AI思考中...',over:'ゲーム終了'}[ph]||ph;
+}
+
+function pad2(n){ return n<10?'0'+n:''+n; }
+
+function renderObs(key,p){
+  var obs=document.getElementById('obs-'+key); if(!obs) return;
+  if(p.obs.isGold) obs.classList.add('gold'); else obs.classList.remove('gold');
+  var face=p.obs.isGold?'gold':'gray';
+  var isHuman=(key==='human');
+  var peekH = isHuman ? 20 : 12;
+  var cardH = isHuman ? 89 : 35;
+  var cardW = isHuman ? 57 : 22;
+  var selectMode = isHuman && G_cardSelect !== null;
+
+  EDGES.forEach(function(edge){
+    var el=document.getElementById('oe-'+key+'-'+edge); if(!el) return;
+    var bonusTileEl = el.querySelector('.bonus-tile');
+    var bonusTileHtml = bonusTileEl ? bonusTileEl.outerHTML : '';
+    var area=OBS_LAYOUT[face][edge];
+    var stack=p.obs.stacks[edge]||[];
+    var html='<span class="edge-label">'+AREA_LABEL[area]+'</span>';
+
+    if(stack.length>0){
+      var totalH=cardH+(stack.length-1)*peekH;
+      var selectable = selectMode && stack.length>0;
+      var tapAttr = selectable ? ' onclick="tapObsCard(\''+edge+'\')" style="cursor:pointer;top:' : ' style="top:';
+
+      html+='<div class="obs-stack" style="width:'+cardW+'px;height:'+totalH+'px;">';
+      stack.forEach(function(card,i){
+        var top=i*peekH;
+        var isTop=(i===stack.length-1);
+        var glowStyle = (selectable && isTop) ? 'box-shadow:0 0 10px 3px #f0d060;border-color:#f0d060;' : '';
+
+        if(isHuman){
+          var clickAttr = (selectable && isTop) ? ' onclick="tapObsCard(\''+edge+'\')" style="cursor:pointer;top:'+top+'px;z-index:'+i+';'+glowStyle+'"' : ' style="top:'+top+'px;z-index:'+i+';"';
+          if(card.faceUp)
+            html+='<div class="rocket-bridge"'+clickAttr+'><img src="card '+pad2(card.id)+' front.jpg" onerror="this.style.display=\'none\'"><span class="cnum show">'+card.value+'</span></div>';
+          else
+            html+='<div class="rocket-bridge face-down"'+clickAttr+'><img src="card back 01-56.jpg" onerror="this.style.display=\'none\'"><span class="cnum show">裏</span></div>';
+        } else {
+          if(card.faceUp)
+            html+='<div class="rocket-mini" style="top:'+top+'px;z-index:'+i+'"><img src="card '+pad2(card.id)+' front.jpg" onerror="this.style.display=\'none\';this.parentNode.querySelector(\'span\').style.display=\'block\';"><span style="display:none;font-size:7px;">'+card.value+'</span></div>';
+          else
+            html+='<div class="rocket-mini face-down" style="top:'+top+'px;z-index:'+i+'"><img src="card back 01-56.jpg" onerror="this.style.display=\'none\'"><span style="display:none;font-size:7px;">裏</span></div>';
+        }
+      });
+      html+='</div>';
+    }
+    el.innerHTML=bonusTileHtml+html; el.style.background='';
+  });
+}
+
+// ===== 衛星ボーナス達成報酬タイルの状態更新 =====
+function renderBonusTiles(){
+  if(!G) return;
+  var keys=['human','ai1','ai2'];
+  keys.forEach(function(key,pi){
+    var jt=document.getElementById('bt-'+key+'-top');
+    if(jt){
+      jt.className='bonus-tile bonus-tile-jupiter';
+      if(G.jupiterBonus===null) jt.classList.add('unclaimed');
+      else if(G.jupiterBonus===pi) jt.classList.add('claimed-here');
+      else jt.classList.add('claimed-elsewhere');
+    }
+    var mt=document.getElementById('bt-'+key+'-left');
+    if(mt){
+      mt.className='bonus-tile bonus-tile-mars';
+      if(G.marsBonus===null) mt.classList.add('unclaimed');
+      else if(G.marsBonus===pi) mt.classList.add('claimed-here');
+      else mt.classList.add('claimed-elsewhere');
+    }
+  });
+}
+
+function renderHand(p){
+  var area=document.getElementById('hand-area'); area.innerHTML='';
+  var canSelect=(G.phase===PH.DEAL&&!G.played.find(function(e){return e.pi===0;}));
+  var sorted=p.hand.map(function(c,i){return {card:c,idx:i};}).sort(function(a,b){return a.card.value-b.card.value;});
+  sorted.forEach(function(item){
+    var el=document.createElement('div');
+    el.className='card'+(canSelect?' selectable':'');
+
+    // 長押し（400ms）で拡大
+    var pressTimer=null;
+    el.addEventListener('touchstart',function(){
+      pressTimer=setTimeout(function(){ showCardZoom(item.card); },400);
+    },{passive:true});
+    el.addEventListener('touchmove',function(){ clearTimeout(pressTimer); },{passive:true});
+    el.addEventListener('touchend',function(){ clearTimeout(pressTimer); },{passive:true});
+    // 右クリックでも拡大
+    el.addEventListener('contextmenu',function(e){ e.preventDefault(); showCardZoom(item.card); });
+
+    if(canSelect){
+      (function(idx){ el.addEventListener('click',function(){ humanPlay(idx); }); })(item.idx);
+    } else {
+      el.addEventListener('click',function(){ showCardZoom(item.card); });
+    }
+
+    var img=document.createElement('img');
+    img.src='card '+pad2(item.card.id)+' front.jpg';
+    var num=document.createElement('div');
+    num.className='cnum'; num.textContent=item.card.value;
+    img.onerror=function(){ this.style.display='none'; num.classList.add('show'); };
+    el.appendChild(img);
+    el.appendChild(num);
+    area.appendChild(el);
+  });
+}
+
+function showCardZoom(card){
+  document.getElementById('card-zoom-img').src='card '+pad2(card.id)+' front.jpg';
+  document.getElementById('card-zoom-num').textContent=card.value;
+  document.getElementById('card-zoom').classList.add('show');
+}
+function closeCardZoom(){ document.getElementById('card-zoom').classList.remove('show'); }
+
+function renderPlayed(){
+  ['human','ai1','ai2'].forEach(function(key,i){
+    var pe=G.played.find(function(e){return e.pi===i;});
+    var cel=document.getElementById('pc-'+key);
+    var vel=document.getElementById('pv-'+key);
+    if(pe){
+      cel.className='card played-card'; cel.innerHTML='';
+      var img=document.createElement('img');
+      img.src='card '+pad2(pe.card.id)+' front.jpg';
+      var num=document.createElement('div'); num.className='cnum'; num.textContent=pe.card.value;
+      img.onerror=function(){ this.style.display='none'; num.classList.add('show'); };
+      cel.appendChild(img); cel.appendChild(num);
+      vel.textContent=pe.card.value;
+    } else {
+      cel.className='card face-down'; cel.innerHTML='<span style="font-size:9px;color:#334">?</span>'; vel.textContent='-';
+    }
+  });
+}
+
+function setAP(title,btns){
+  document.getElementById('ap-title').textContent=title;
+  var area=document.getElementById('ap-btns'); area.innerHTML='';
+  btns.forEach(function(b){
+    var btn=document.createElement('button');
+    btn.className='abtn'+(b.primary?' primary':''); btn.textContent=b.label;
+    btn.addEventListener('click',b.fn); area.appendChild(btn);
+  });
+}
+
+// ========== ログ ==========
+function addLog(txt,type){
+  var list=document.getElementById('log-list');
+  var el=document.createElement('div');
+  el.className='log-e'+(type?' '+type:''); el.textContent=txt;
+  list.appendChild(el);
+  list.scrollLeft=list.scrollWidth;
+}
+
+// ========== モーダル ==========
+function showModal(title,desc,btns,extraHtml){
+  document.getElementById('m-title').textContent=title;
+  document.getElementById('m-desc').textContent=desc;
+  document.getElementById('m-extra').innerHTML = extraHtml || '';
+  var area=document.getElementById('m-btns'); area.innerHTML='';
+  btns.forEach(function(b){
+    var btn=document.createElement('button');
+    btn.className='mbtn'; btn.textContent=b.label; btn.addEventListener('click',b.fn); area.appendChild(btn);
+  });
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('show'); }
+
+// ===== 遊び方（簡易ルール解説） =====
+var RULES_HTML =
+  '<div class="rule-grid">'+
+    '<div class="rule-chip c-launch"><b>発射台</b>カードの出入り口。ここから他エリアへ進む。</div>'+
+    '<div class="rule-chip c-construction"><b>建設</b>3枚たまると天文台が金色化する。</div>'+
+    '<div class="rule-chip c-development"><b>開発</b>表向き2枚以上／金色なら常に、出したカードが発射台へ戻る。</div>'+
+    '<div class="rule-chip c-contact"><b>交信</b>手札1枚と捨て札1枚を交換できる。</div>'+
+    '<div class="rule-chip c-encounter"><b>遭遇</b>捨て札から1枚を手札に加えられる（金色限定）。</div>'+
+    '<div class="rule-chip c-award"><b>顕彰</b>裏向きカードを集めると高得点（金色限定）。</div>'+
+  '</div>'+
+  '<div class="rule-note"><b>金色化：</b>建設エリアに3枚たまると天文台が金色に変わり、より高得点を狙えるエリア構成になる。</div>'+
+  '<div class="rule-note"><b>衛星ボーナス：</b>天文台の上辺に最初に裏向きカードを置いた人が木星ボーナス+7点、左辺なら火星ボーナス+3点。</div>'+
+  '<div class="rule-note">詳しい正式ルールはBoardGameGeekのファイルをご覧ください。</div>';
+
+function showRulesModal(){
+  showModal('遊び方（かんたん版）','',[{label:'閉じる',fn:closeModal}],RULES_HTML);
+}
+
+// ========== 起動 ==========
+// 手札カードサイズを動的計算（12枚が必ず収まるよう）
+function resizeHandCards(){
+  var col = document.getElementById('hand-col');
+  var handArea = document.getElementById('hand-area');
+  var centerArea = document.getElementById('center-area');
+  if(!col||!handArea) return;
+
+  var isMobile = window.innerWidth <= 760;
+  var colW = col.clientWidth - 12; // padding分
+  var cardW, cardH;
+
+  if(isMobile){
+    // スマホ：縦幅に合わせて縮めない。横幅基準で大きめに固定し、
+    // 収まりきらない分は hand-area の縦スクロールに任せる。
+    var mobileCols = colW < 340 ? 3 : 4;
+    var gapM = 4;
+    cardW = Math.floor((colW - gapM*(mobileCols-1)) / mobileCols);
+    cardW = Math.max(64, Math.min(cardW, 100));
+    cardH = Math.floor(cardW * 89 / 57);
+  } else {
+    var colH = col.clientHeight - 12;
+    var centerH = centerArea ? centerArea.offsetHeight : 0;
+    var availH = colH - centerH - 20; // 中段・gap分
+
+    // 4列×3行に収める（12枚全部表示）
+    var cols = 4, rows = 3;
+    var gap = 2;
+    cardW = Math.floor((colW - gap*(cols-1)) / cols);
+    cardH = Math.floor((availH - gap*(rows-1)) / rows);
+    // 57:89の比率を保つ
+    var byW = Math.floor(cardW * 89 / 57);
+    if(byW <= cardH){
+      cardH = byW;
+    } else {
+      cardW = Math.floor(cardH * 57 / 89);
+    }
+    // 最大サイズを制限（12枚が常に見えるよう上限を設ける）
+    var maxCardW = Math.floor((colW - gap*(cols-1)) / cols);
+    var maxCardH = Math.floor(maxCardW * 89 / 57);
+    if(cardW > maxCardW){ cardW = maxCardW; cardH = Math.floor(cardW * 89 / 57); }
+    if(cardH > maxCardH){ cardH = maxCardH; cardW = Math.floor(cardH * 57 / 89); }
+    cardW = Math.max(28, Math.min(cardW, 90));
+    cardH = Math.max(44, Math.min(cardH, 141));
+  }
+
+  // CSSに適用
+  var style = document.getElementById('hand-card-size-style');
+  if(!style){
+    style = document.createElement('style');
+    style.id = 'hand-card-size-style';
+    document.head.appendChild(style);
+  }
+  style.textContent =
+    '#hand-area .card { width:'+cardW+'px !important; height:'+cardH+'px !important; }';
+}
+
+window.addEventListener('load',function(){
+  document.getElementById('card-zoom').addEventListener('click', closeCardZoom);
+  document.getElementById('mf-replay').addEventListener('click', function(){
+    document.getElementById('modal-final').classList.remove('show');
+    initGame();
+  });
+  resizeHandCards();
+  window.addEventListener('resize', resizeHandCards);
+  showModal('木星に向かう12のステップ',
+    'AI 2体と対戦します。\n手札12枚を使って最高得点を目指してください。',
+    [{label:'ゲーム開始',fn:function(){ closeModal(); initGame(); }}],
+    RULES_HTML);
+});
+
+// Node.jsでのヘッドレスシミュレーション用（ブラウザ実行には影響なし）
+if(typeof module !== 'undefined'){
+  module.exports = { simOneGame, aiPickCard, aiDecide, aiIntendedRank, aiIntendedRankCooperative,
+    calcScore, EDGES, OBS_LAYOUT, SUMMARY, ALL_CARDS, launchEdge, moveEdge, faceUpCount, getRankAchievability };
+}
+</script>
+</body></html>
