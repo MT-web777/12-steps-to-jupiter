@@ -557,7 +557,36 @@ body {
   #mbox p { font-size: 14px !important; }
   .mbtn { font-size: 14px !important; padding: 10px 12px !important; }
   .rule-chip, .rule-chip b, .rule-note { font-size: 12px !important; }
+
+  /* ===== スマホ：3パートをタブ切り替えに ===== */
+  #mobile-tabs {
+    display: flex;
+    flex-shrink: 0;
+    background: rgba(13, 27, 62, 0.95);
+    border-bottom: 1px solid #3a4a7a;
+  }
+  .mtab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #8899bb;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 9px 2px;
+    line-height: 1.3;
+  }
+  .mtab-btn.active {
+    color: #f0d060;
+    border-bottom-color: #c8b86a;
+    background: rgba(200, 184, 106, 0.08);
+  }
+  #hand-col, #obs-area, #ai-sidebar { display: none !important; }
+  #hand-col.mtab-active { display: flex !important; }
+  #obs-area.mtab-active { display: flex !important; }
+  #ai-sidebar.mtab-active { display: flex !important; }
 }
+#mobile-tabs { display: none; }
 </style>
 </head>
 <body>
@@ -570,10 +599,16 @@ body {
   </div>
 </div>
 
+<div id="mobile-tabs">
+  <button type="button" class="mtab-btn active" data-tab="hand-col" onclick="switchMobileTab('hand-col')">手札・場</button>
+  <button type="button" class="mtab-btn" data-tab="obs-area" onclick="switchMobileTab('obs-area')">あなたの天文台</button>
+  <button type="button" class="mtab-btn" data-tab="ai-sidebar" onclick="switchMobileTab('ai-sidebar')">対戦相手</button>
+</div>
+
 <div id="main">
 
   <!-- 左：手札（上）＋出す場（下） -->
-  <div id="hand-col">
+  <div id="hand-col" class="mtab-active">
     <div class="area-label">手札 <span id="hc-human">12</span>枚　<span class="score" id="sc-human">0点</span></div>
     <div id="hand-area"></div>
     <!-- 出す場（左下） -->
@@ -2946,6 +2981,17 @@ var RULES_HTML =
 
 function showRulesModal(){
   showModal('遊び方（かんたん版）','',[{label:'閉じる',fn:closeModal}],RULES_HTML);
+}
+
+// ===== スマホ用：3パートのタブ切り替え =====
+function switchMobileTab(name){
+  ['hand-col','obs-area','ai-sidebar'].forEach(function(id){
+    document.getElementById(id).classList.toggle('mtab-active', id===name);
+  });
+  document.querySelectorAll('.mtab-btn').forEach(function(btn){
+    btn.classList.toggle('active', btn.getAttribute('data-tab')===name);
+  });
+  if(name==='hand-col') resizeHandCards();
 }
 
 // ========== 起動 ==========
