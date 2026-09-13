@@ -3081,4 +3081,23 @@ function resizeHandCards(){
 window.addEventListener('load',function(){
   document.getElementById('card-zoom').addEventListener('click', closeCardZoom);
   document.getElementById('mf-replay').addEventListener('click', function(){
-    document.getElementById('modal-final').classList.remove
+    document.getElementById('modal-final').classList.remove('show');
+    initGame();
+  });
+  resizeHandCards();
+  window.addEventListener('resize', resizeHandCards);
+  updateMobileLayout();
+  window.addEventListener('resize', updateMobileLayout);
+  showModal('木星に向かう12のステップ',
+    'AI 2体と対戦します。\n手札12枚を使って最高得点を目指してください。',
+    [{label:'ゲーム開始',fn:function(){ closeModal(); initGame(); }}],
+    RULES_HTML);
+});
+
+// Node.jsでのヘッドレスシミュレーション用（ブラウザ実行には影響なし）
+if(typeof module !== 'undefined'){
+  module.exports = { simOneGame, aiPickCard, aiDecide, aiIntendedRank, aiIntendedRankCooperative,
+    calcScore, EDGES, OBS_LAYOUT, SUMMARY, ALL_CARDS, launchEdge, moveEdge, faceUpCount, getRankAchievability };
+}
+</script>
+</body></html>
