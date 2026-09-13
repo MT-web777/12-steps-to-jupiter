@@ -524,12 +524,11 @@ body.tab-mode #hand-col {
 body.tab-mode #hand-area { overflow-y: auto; }
 
 body.tab-mode #obs-area { order: 1; width: 100%; }
-body.tab-mode #obs-wrap-human { padding: 60px 40px; }
-body.tab-mode .obs-human-large { width: 220px; height: 220px; }
-body.tab-mode .obs-human-large .obs-top { top: -65px; height: 60px; }
-body.tab-mode .obs-human-large .obs-bottom { bottom: -65px; height: 60px; }
-body.tab-mode .obs-human-large .obs-left { left: -45px; width: 40px; }
-body.tab-mode .obs-human-large .obs-right { right: -45px; width: 40px; }
+body.tab-mode .played-slot .card { width: 92px; height: 144px; }
+body.tab-mode .played-slot .slot-name { font-size: 14px; }
+body.tab-mode .played-slot .slot-val { font-size: 20px; min-height: 24px; }
+
+body.tab-mode .obs-scale-box { position: relative; margin: 0 auto; }
 
 body.tab-mode #ai-sidebar {
   order: 3; width: 100%; flex-direction: row;
@@ -644,6 +643,7 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
   <div id="obs-area">
     <div class="player-block">
       <div class="player-label" id="lbl-human">あなた</div>
+      <div class="obs-scale-box" id="scalebox-human">
       <div id="obs-wrap-human">
         <div class="observatory obs-human-large" id="obs-human">
           <div class="obs-board" id="obs-board-human" onclick="toggleObsBoard()">
@@ -657,6 +657,7 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
           <div class="obs-center" id="oc-human">天文台</div>
         </div>
       </div>
+      </div>
     </div>
   </div>
   <!-- 右サイドバー：AI1・AI2縦並び -->
@@ -667,6 +668,7 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
         <span id="strategy-ai1" class="strategy-badge" style="color:#5a9a5a;">戦法B（攻撃・上段）</span>
         <span id="gold-ai1" class="gold-badge">🌑 通常</span>
       </div>
+      <div class="obs-scale-box" id="scalebox-ai1">
       <div id="obs-wrap-ai1">
         <div class="observatory obs-ai" id="obs-ai1">
           <div class="obs-bg"></div>
@@ -677,6 +679,7 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
           <div class="obs-center" id="oc-ai1">天文台</div>
         </div>
       </div>
+      </div>
       <div class="area-label">手札 <span id="hc-ai1">12</span>枚</div>
     </div>
     <div class="player-block" id="block-ai2">
@@ -685,6 +688,7 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
         <span id="strategy-ai2" class="strategy-badge" style="color:#5a7aaa;">戦法A（堅実・下段）</span>
         <span id="gold-ai2" class="gold-badge">🌑 通常</span>
       </div>
+      <div class="obs-scale-box" id="scalebox-ai2">
       <div id="obs-wrap-ai2">
         <div class="observatory obs-ai" id="obs-ai2">
           <div class="obs-bg"></div>
@@ -694,6 +698,7 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
           <div class="obs-edge obs-bottom" id="oe-ai2-bottom"></div>
           <div class="obs-center" id="oc-ai2">天文台</div>
         </div>
+      </div>
       </div>
       <div class="area-label">手札 <span id="hc-ai2">12</span>枚</div>
     </div>
@@ -2977,6 +2982,51 @@ function showRulesModal(){
   showModal('遊び方（かんたん版）','',[{label:'閉じる',fn:closeModal}],RULES_HTML);
 }
 
+// ===== 天文台（あなた／AI）の表示を、タブの余白いっぱいに拡大縮小 =====
+function fitObsScale(boxId, wrapId, availW, availH){
+  var box = document.getElementById(boxId);
+  var wrap = document.getElementById(wrapId);
+  if(!box || !wrap) return;
+  wrap.style.transform = 'none';
+  var w = wrap.offsetWidth, h = wrap.offsetHeight;
+  if(w<=0 || h<=0) return;
+  var scale = Math.min(availW/w, availH/h) * 0.95;
+  scale = Math.max(0.4, Math.min(scale, 3));
+  wrap.style.transformOrigin = 'top left';
+  wrap.style.transform = 'scale('+scale+')';
+  box.style.width = Math.round(w*scale)+'px';
+  box.style.height = Math.round(h*scale)+'px';
+}
+
+function resizeObsHuman(){
+  var area = document.getElementById('obs-area');
+  if(!area) return;
+  var availW = area.clientWidth - 16;
+  var availH = area.clientHeight - 16;
+  if(availW<=0 || availH<=0) return;
+  fitObsScale('scalebox-human','obs-wrap-human', availW, availH);
+}
+
+function resizeObsAi(){
+  var sidebar = document.getElementById('ai-sidebar');
+  var block1 = document.getElementById('block-ai1');
+  if(!sidebar || !block1) return;
+  var availW = Math.floor(sidebar.clientWidth/2) - 24;
+  var availH = block1.clientHeight - 70; // ラベル・戦法バッジ・手札枚数表示の高さ分を概算で除く
+  if(availW<=0) return;
+  if(availH<=0) availH = 130;
+  fitObsScale('scalebox-ai1','obs-wrap-ai1', availW, availH);
+  fitObsScale('scalebox-ai2','obs-wrap-ai2', availW, availH);
+}
+
+function resizeActiveTab(){
+  var activeBtn = document.querySelector('.mtab-btn.active');
+  var tab = activeBtn ? activeBtn.getAttribute('data-tab') : 'hand-col';
+  if(tab==='hand-col') resizeHandCards();
+  else if(tab==='obs-area') resizeObsHuman();
+  else if(tab==='ai-sidebar') resizeObsAi();
+}
+
 // ===== 3パートのタブ切り替え（常時オン。画面幅の判定には依存しない） =====
 var MOBILE_TAB_PANELS = ['hand-col','obs-area','ai-sidebar'];
 
@@ -2994,6 +3044,8 @@ function switchMobileTab(name){
   });
   applyMobilePanel(name);
   if(name==='hand-col') resizeHandCards();
+  else if(name==='obs-area') resizeObsHuman();
+  else if(name==='ai-sidebar') resizeObsAi();
 }
 
 function updateMobileLayout(){
@@ -3047,7 +3099,7 @@ window.addEventListener('load',function(){
     initGame();
   });
   resizeHandCards();
-  window.addEventListener('resize', resizeHandCards);
+  window.addEventListener('resize', resizeActiveTab);
   updateMobileLayout();
   showModal('木星に向かう12のステップ',
     'AI 2体と対戦します。\n手札12枚を使って最高得点を目指してください。',
