@@ -512,63 +512,57 @@ body {
 }
 
 /* ===== レスポンシブ（スマホ幅） ===== */
-@media (max-width: 760px) {
-  body { height: auto; min-height: 100vh; overflow-y: auto; overflow-x: hidden; }
-  #main { flex-direction: column; overflow: visible; }
+body.tab-mode { height: auto; min-height: 100vh; overflow-y: auto; overflow-x: hidden; font-size: 15px; }
+body.tab-mode #main { flex-direction: column; overflow: visible; }
 
-  #hand-col {
-    width: 100%; order: 2;
-    max-height: none;
-  }
-  #hand-area { max-height: 40vh; overflow-y: auto; }
-
-  #obs-area { order: 1; width: 100%; }
-  #obs-wrap-human { padding: 60px 40px; }
-  .obs-human-large { width: 220px; height: 220px; }
-  .obs-human-large .obs-top { top: -65px; height: 60px; }
-  .obs-human-large .obs-bottom { bottom: -65px; height: 60px; }
-  .obs-human-large .obs-left { left: -45px; width: 40px; }
-  .obs-human-large .obs-right { right: -45px; width: 40px; }
-
-  #ai-sidebar {
-    order: 3; width: 100%; flex-direction: row;
-    overflow-x: auto; overflow-y: hidden; border-left: none;
-    border-top: 1px solid #1e2a3e;
-  }
-  .player-block { flex-shrink: 0; width: 160px; }
-
-  #header h1 { font-size: 13px; }
-  #log-area { height: 40px; }
-
-  /* 文字が小さすぎる箇所をスマホ用に拡大 */
-  body { font-size: 15px; }
-  .edge-label { font-size: 11px !important; }
-  .card .cnum { font-size: 13px !important; }
-  #hand-area .card .cnum { font-size: 20px !important; }
-  .area-label { font-size: 12px !important; }
-  .slot-name { font-size: 11px !important; }
-  .slot-val { font-size: 16px !important; }
-  .player-label { font-size: 13px !important; }
-  .strategy-badge, .gold-badge { font-size: 11px !important; }
-  .log-e { font-size: 13px !important; }
-  #action-panel h3 { font-size: 13px !important; }
-  .abtn { font-size: 13px !important; padding: 8px 10px !important; }
-  #mbox h2 { font-size: 16px !important; }
-  #mbox p { font-size: 14px !important; }
-  .mbtn { font-size: 14px !important; padding: 10px 12px !important; }
-  .rule-chip, .rule-chip b, .rule-note { font-size: 12px !important; }
+body.tab-mode #hand-col {
+  width: 100%; order: 2;
+  max-height: none;
 }
+body.tab-mode #hand-area { max-height: 55vh; overflow-y: auto; }
 
-/* ===== スマホ：3パートをタブ切り替えに（表示/非表示はJSがインラインstyleで直接制御。
-   メディアクエリの判定に頼らずJSのmatchMediaで確実に切り替えるため、ここではタブバーの
-   見た目だけを定義する） ===== */
+body.tab-mode #obs-area { order: 1; width: 100%; }
+body.tab-mode #obs-wrap-human { padding: 60px 40px; }
+body.tab-mode .obs-human-large { width: 220px; height: 220px; }
+body.tab-mode .obs-human-large .obs-top { top: -65px; height: 60px; }
+body.tab-mode .obs-human-large .obs-bottom { bottom: -65px; height: 60px; }
+body.tab-mode .obs-human-large .obs-left { left: -45px; width: 40px; }
+body.tab-mode .obs-human-large .obs-right { right: -45px; width: 40px; }
+
+body.tab-mode #ai-sidebar {
+  order: 3; width: 100%; flex-direction: row;
+  overflow-x: auto; overflow-y: hidden; border-left: none;
+  border-top: 1px solid #1e2a3e;
+}
+body.tab-mode .player-block { flex-shrink: 0; width: 160px; }
+
+body.tab-mode #header h1 { font-size: 13px; }
+body.tab-mode #log-area { height: 40px; }
+
+/* 文字が小さすぎる箇所をスマホ用に拡大 */
+body.tab-mode .edge-label { font-size: 11px !important; }
+body.tab-mode .card .cnum { font-size: 13px !important; }
+body.tab-mode #hand-area .card .cnum { font-size: 20px !important; }
+body.tab-mode .area-label { font-size: 12px !important; }
+body.tab-mode .slot-name { font-size: 11px !important; }
+body.tab-mode .slot-val { font-size: 16px !important; }
+body.tab-mode .player-label { font-size: 13px !important; }
+body.tab-mode .strategy-badge, body.tab-mode .gold-badge { font-size: 11px !important; }
+body.tab-mode .log-e { font-size: 13px !important; }
+body.tab-mode #action-panel h3 { font-size: 13px !important; }
+body.tab-mode .abtn { font-size: 13px !important; padding: 8px 10px !important; }
+body.tab-mode #mbox h2 { font-size: 16px !important; }
+body.tab-mode #mbox p { font-size: 14px !important; }
+body.tab-mode .mbtn { font-size: 14px !important; padding: 10px 12px !important; }
+body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note { font-size: 12px !important; }
+
+/* ===== 3パートのタブ切り替え（常時オン。画面幅の判定には依存しない） ===== */
 #mobile-tabs {
-  display: none;
+  display: flex;
   flex-shrink: 0;
   background: rgba(13, 27, 62, 0.95);
   border-bottom: 1px solid #3a4a7a;
 }
-#mobile-tabs.show { display: flex; }
 .mtab-btn {
   flex: 1;
   background: none;
@@ -2981,13 +2975,8 @@ function showRulesModal(){
   showModal('遊び方（かんたん版）','',[{label:'閉じる',fn:closeModal}],RULES_HTML);
 }
 
-// ===== スマホ用：3パートのタブ切り替え =====
-// CSSのメディアクエリだけに頼らず、JS側でも幅を判定して確実に切り替える。
+// ===== 3パートのタブ切り替え（常時オン。画面幅の判定には依存しない） =====
 var MOBILE_TAB_PANELS = ['hand-col','obs-area','ai-sidebar'];
-
-function isMobileWidth(){
-  return window.matchMedia('(max-width: 760px)').matches;
-}
 
 function applyMobilePanel(name){
   MOBILE_TAB_PANELS.forEach(function(id){
@@ -3006,19 +2995,9 @@ function switchMobileTab(name){
 }
 
 function updateMobileLayout(){
-  var tabs = document.getElementById('mobile-tabs');
-  if(!tabs) return;
-  if(isMobileWidth()){
-    tabs.classList.add('show');
-    var activeBtn = document.querySelector('.mtab-btn.active');
-    applyMobilePanel(activeBtn ? activeBtn.getAttribute('data-tab') : 'hand-col');
-  } else {
-    tabs.classList.remove('show');
-    MOBILE_TAB_PANELS.forEach(function(id){
-      var el = document.getElementById(id);
-      if(el) el.style.display = ''; // デスクトップ用CSSに任せる
-    });
-  }
+  document.body.classList.add('tab-mode');
+  var activeBtn = document.querySelector('.mtab-btn.active');
+  applyMobilePanel(activeBtn ? activeBtn.getAttribute('data-tab') : 'hand-col');
 }
 
 // ========== 起動 ==========
@@ -3087,7 +3066,6 @@ window.addEventListener('load',function(){
   resizeHandCards();
   window.addEventListener('resize', resizeHandCards);
   updateMobileLayout();
-  window.addEventListener('resize', updateMobileLayout);
   showModal('木星に向かう12のステップ',
     'AI 2体と対戦します。\n手札12枚を使って最高得点を目指してください。',
     [{label:'ゲーム開始',fn:function(){ closeModal(); initGame(); }}],
