@@ -518,8 +518,10 @@ body.tab-mode #main { flex-direction: column; overflow: visible; }
 body.tab-mode #hand-col {
   width: 100%; order: 2;
   max-height: none;
+  flex: 1 1 auto;
+  height: 0; /* flexアイテムとして残り高さいっぱいに伸ばす */
 }
-body.tab-mode #hand-area { max-height: 55vh; overflow-y: auto; }
+body.tab-mode #hand-area { overflow-y: auto; }
 
 body.tab-mode #obs-area { order: 1; width: 100%; }
 body.tab-mode #obs-wrap-human { padding: 60px 40px; }
@@ -3007,14 +3009,24 @@ function resizeHandCards(){
   var handArea = document.getElementById('hand-area');
   if(!col||!handArea) return;
 
-  // 常時タブ表示（1画面1パート）なので、幅の判定に頼らず
-  // 常に「読みやすい大きめサイズ」で計算する。収まりきらない分は
-  // hand-area の縦スクロールに任せる。
-  var colW = col.clientWidth - 12; // padding分
-  var cols = colW < 340 ? 3 : (colW < 460 ? 4 : 5);
+  var n = handArea.children.length;
+  if(n < 1) n = 1;
+  var availW = handArea.clientWidth;
+  var availH = handArea.clientHeight;
+  if(availW <= 0 || availH <= 0) return; // まだレイアウト確定前
+
+  // 幅と高さの両方を使い切るように、列数ごとに実現できるカード幅を試して最大のものを選ぶ
   var gap = 4;
-  var cardW = Math.floor((colW - gap*(cols-1)) / cols);
-  cardW = Math.max(72, Math.min(cardW, 120));
+  var bestW = 0;
+  for(var cols=2; cols<=6; cols++){
+    var rows = Math.ceil(n/cols);
+    var wByWidth = Math.floor((availW - gap*(cols-1)) / cols);
+    var hByHeight = Math.floor((availH - gap*(rows-1)) / rows);
+    var wByHeight = Math.floor(hByHeight * 57/89);
+    var w = Math.min(wByWidth, wByHeight);
+    if(w > bestW) bestW = w;
+  }
+  var cardW = Math.max(56, Math.min(bestW, 170));
   var cardH = Math.floor(cardW * 89 / 57);
 
   // CSSに適用
