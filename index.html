@@ -3005,46 +3005,17 @@ function updateMobileLayout(){
 function resizeHandCards(){
   var col = document.getElementById('hand-col');
   var handArea = document.getElementById('hand-area');
-  var centerArea = document.getElementById('center-area');
   if(!col||!handArea) return;
 
-  var isMobile = window.innerWidth <= 760;
+  // 常時タブ表示（1画面1パート）なので、幅の判定に頼らず
+  // 常に「読みやすい大きめサイズ」で計算する。収まりきらない分は
+  // hand-area の縦スクロールに任せる。
   var colW = col.clientWidth - 12; // padding分
-  var cardW, cardH;
-
-  if(isMobile){
-    // スマホ：縦幅に合わせて縮めない。横幅基準で大きめに固定し、
-    // 収まりきらない分は hand-area の縦スクロールに任せる。
-    var mobileCols = colW < 340 ? 3 : 4;
-    var gapM = 4;
-    cardW = Math.floor((colW - gapM*(mobileCols-1)) / mobileCols);
-    cardW = Math.max(64, Math.min(cardW, 100));
-    cardH = Math.floor(cardW * 89 / 57);
-  } else {
-    var colH = col.clientHeight - 12;
-    var centerH = centerArea ? centerArea.offsetHeight : 0;
-    var availH = colH - centerH - 20; // 中段・gap分
-
-    // 4列×3行に収める（12枚全部表示）
-    var cols = 4, rows = 3;
-    var gap = 2;
-    cardW = Math.floor((colW - gap*(cols-1)) / cols);
-    cardH = Math.floor((availH - gap*(rows-1)) / rows);
-    // 57:89の比率を保つ
-    var byW = Math.floor(cardW * 89 / 57);
-    if(byW <= cardH){
-      cardH = byW;
-    } else {
-      cardW = Math.floor(cardH * 57 / 89);
-    }
-    // 最大サイズを制限（12枚が常に見えるよう上限を設ける）
-    var maxCardW = Math.floor((colW - gap*(cols-1)) / cols);
-    var maxCardH = Math.floor(maxCardW * 89 / 57);
-    if(cardW > maxCardW){ cardW = maxCardW; cardH = Math.floor(cardW * 89 / 57); }
-    if(cardH > maxCardH){ cardH = maxCardH; cardW = Math.floor(cardH * 57 / 89); }
-    cardW = Math.max(28, Math.min(cardW, 90));
-    cardH = Math.max(44, Math.min(cardH, 141));
-  }
+  var cols = colW < 340 ? 3 : (colW < 460 ? 4 : 5);
+  var gap = 4;
+  var cardW = Math.floor((colW - gap*(cols-1)) / cols);
+  cardW = Math.max(72, Math.min(cardW, 120));
+  var cardH = Math.floor(cardW * 89 / 57);
 
   // CSSに適用
   var style = document.getElementById('hand-card-size-style');
