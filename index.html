@@ -514,6 +514,13 @@ body {
 }
 .mf-score-row.winner { color:#f0d060; font-weight:bold; border-bottom-color:#5a4a1a; }
 .mf-score-row .mf-num { font-variant-numeric:tabular-nums; }
+#mf-obs-preview { margin-bottom: 14px; }
+.mf-obs-top { display:flex; flex-direction:column; align-items:center; margin-bottom: 8px; }
+.mf-obs-row-bottom { display:flex; justify-content:center; gap: 12px; }
+.mf-obs-item { display:flex; flex-direction:column; align-items:center; }
+.mf-obs-label { font-size: 11px; color:#a8bedd; margin-bottom:4px; }
+.mf-obs-scale { width:100px; height:100px; overflow:visible; }
+.mf-obs-scale .observatory { transform: scale(0.625); transform-origin: top left; }
 #mf-highlights {
   text-align:left; font-size:11px; color:#8aa0c0; line-height:1.7;
   background:rgba(255,255,255,0.03); border-radius:5px; padding:8px 10px; margin-bottom:14px;
@@ -651,12 +658,12 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
       <div class="slot-val" id="pv-human">-</div>
     </div>
     <div class="played-slot">
-      <div class="slot-name">AI 1</div>
+      <div class="slot-name">アポロ</div>
       <div class="card face-down" id="pc-ai1"><span style="font-size:9px;color:#334">?</span></div>
       <div class="slot-val" id="pv-ai1">-</div>
     </div>
     <div class="played-slot">
-      <div class="slot-name">AI 2</div>
+      <div class="slot-name">ソユーズ</div>
       <div class="card face-down" id="pc-ai2"><span style="font-size:9px;color:#334">?</span></div>
       <div class="slot-val" id="pv-ai2">-</div>
     </div>
@@ -712,7 +719,7 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
   <div id="ai-sidebar">
     <div id="ai-row">
     <div class="player-block" id="block-ai1">
-      <div class="player-label" id="lbl-ai1">AI 1　<span class="score" id="sc-ai1">0点</span></div>
+      <div class="player-label" id="lbl-ai1">アポロ　<span class="score" id="sc-ai1">0点</span></div>
       <div class="ai-status-row">
         <span id="strategy-ai1" class="strategy-badge" style="color:#5a9a5a;">戦法B（攻撃・上段）</span>
         <span id="gold-ai1" class="gold-badge">🌑 通常</span>
@@ -732,7 +739,7 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
       <div class="area-label">手札 <span id="hc-ai1">12</span>枚</div>
     </div>
     <div class="player-block" id="block-ai2">
-      <div class="player-label" id="lbl-ai2">AI 2　<span class="score" id="sc-ai2">0点</span></div>
+      <div class="player-label" id="lbl-ai2">ソユーズ　<span class="score" id="sc-ai2">0点</span></div>
       <div class="ai-status-row">
         <span id="strategy-ai2" class="strategy-badge" style="color:#5a7aaa;">戦法A（堅実・下段）</span>
         <span id="gold-ai2" class="gold-badge">🌑 通常</span>
@@ -809,6 +816,49 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
     <div id="mf-planet"></div>
     <h2 id="mf-title">🪐 木星に到達した！</h2>
     <div id="mf-scores"></div>
+    <div id="mf-obs-preview">
+      <div class="mf-obs-item mf-obs-top">
+        <div class="mf-obs-label">あなた</div>
+        <div class="mf-obs-scale">
+          <div class="observatory obs-ai" id="obs-mf-human">
+            <div class="obs-bg"></div>
+            <div class="obs-edge obs-top"    id="oe-mf-human-top"></div>
+            <div class="obs-edge obs-left"   id="oe-mf-human-left"></div>
+            <div class="obs-edge obs-right"  id="oe-mf-human-right"></div>
+            <div class="obs-edge obs-bottom" id="oe-mf-human-bottom"></div>
+            <div class="obs-center" id="oc-mf-human">天文台</div>
+          </div>
+        </div>
+      </div>
+      <div class="mf-obs-row-bottom">
+        <div class="mf-obs-item">
+          <div class="mf-obs-label" id="mf-obs-label-ai1">アポロ</div>
+          <div class="mf-obs-scale">
+            <div class="observatory obs-ai" id="obs-mf-ai1">
+              <div class="obs-bg"></div>
+              <div class="obs-edge obs-top"    id="oe-mf-ai1-top"></div>
+              <div class="obs-edge obs-left"   id="oe-mf-ai1-left"></div>
+              <div class="obs-edge obs-right"  id="oe-mf-ai1-right"></div>
+              <div class="obs-edge obs-bottom" id="oe-mf-ai1-bottom"></div>
+              <div class="obs-center" id="oc-mf-ai1">天文台</div>
+            </div>
+          </div>
+        </div>
+        <div class="mf-obs-item">
+          <div class="mf-obs-label" id="mf-obs-label-ai2">ソユーズ</div>
+          <div class="mf-obs-scale">
+            <div class="observatory obs-ai" id="obs-mf-ai2">
+              <div class="obs-bg"></div>
+              <div class="obs-edge obs-top"    id="oe-mf-ai2-top"></div>
+              <div class="obs-edge obs-left"   id="oe-mf-ai2-left"></div>
+              <div class="obs-edge obs-right"  id="oe-mf-ai2-right"></div>
+              <div class="obs-edge obs-bottom" id="oe-mf-ai2-bottom"></div>
+              <div class="obs-center" id="oc-mf-ai2">天文台</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="mf-highlights"></div>
     <button type="button" id="mf-replay">もう一度遊ぶ</button>
   </div>
@@ -872,7 +922,7 @@ function initGame(){
     return { name:name, isHuman:isHuman, hand:[], obs:{ isGold:false, stacks:{top:[],right:[],bottom:[],left:[]} } };
   }
 
-  var players = [makePlayer('あなた',true), makePlayer('AI 1',false), makePlayer('AI 2',false)];
+  var players = [makePlayer('あなた',true), makePlayer('アポロ',false), makePlayer('ソユーズ',false)];
 
   // 初期ロケット2枚を発射台へ
   players.forEach(function(p){
@@ -2784,6 +2834,11 @@ function showGameOverModal(scores, highlights){
   }).join('');
   document.getElementById('mf-scores').innerHTML = rows;
   document.getElementById('mf-highlights').innerHTML = highlights.map(function(h){ return '<div>'+h+'</div>'; }).join('');
+  renderObs('mf-human', G.players[0]);
+  renderObs('mf-ai1', G.players[1]);
+  renderObs('mf-ai2', G.players[2]);
+  document.getElementById('mf-obs-label-ai1').textContent = G.players[1].name;
+  document.getElementById('mf-obs-label-ai2').textContent = G.players[2].name;
   document.getElementById('modal-final').classList.add('show');
 
   // スコアのカウントアップ演出
@@ -2840,8 +2895,8 @@ function render(){
     var icons = ['','',''];
     if(G.jupiterBonus!==null) icons[G.jupiterBonus]+='🪐';
     if(G.marsBonus!==null) icons[G.marsBonus]+='🔴';
-    document.getElementById('lbl-ai1').innerHTML='AI 1　'+icons[1]+'<span class="score" id="sc-ai1">'+calcScore(ps[1])+'点</span>';
-    document.getElementById('lbl-ai2').innerHTML='AI 2　'+icons[2]+'<span class="score" id="sc-ai2">'+calcScore(ps[2])+'点</span>';
+    document.getElementById('lbl-ai1').innerHTML=ps[1].name+'　'+icons[1]+'<span class="score" id="sc-ai1">'+calcScore(ps[1])+'点</span>';
+    document.getElementById('lbl-ai2').innerHTML=ps[2].name+'　'+icons[2]+'<span class="score" id="sc-ai2">'+calcScore(ps[2])+'点</span>';
     // 人間のスコア表示エリアにもアイコンを
     var humanArea = document.getElementById('sc-human');
     if(humanArea) humanArea.textContent = icons[0]+calcScore(ps[0])+'点';
@@ -3090,12 +3145,15 @@ function fitObsScale(boxId, wrapId, availW, availH){
 }
 
 function resizeObsHuman(){
-  var area = document.getElementById('obs-area');
-  if(!area) return;
-  var availW = area.clientWidth - 16;
-  var availH = area.clientHeight - 16;
-  if(availW<=0 || availH<=0) return;
-  fitObsScale('scalebox-human','obs-wrap-human', availW, availH);
+  // 操作対象（タップで移動先を選ぶ）の天文台は、拡大縮小の変換をかけると
+  // タップ判定がずれる恐れがあるため、常に実寸で表示し、
+  // はみ出す分は obs-area のスクロールに任せる。
+  var box = document.getElementById('scalebox-human');
+  var wrap = document.getElementById('obs-wrap-human');
+  if(!box || !wrap) return;
+  wrap.style.transform = 'none';
+  box.style.width = '';
+  box.style.height = '';
 }
 
 function resizeObsAi(){
