@@ -292,6 +292,38 @@ body {
 .obs-ai .obs-top .bonus-tile  { top: 1px; right: 2px; width: 16px; height: 26px; }
 .obs-ai .obs-left .bonus-tile { top: 2px; left: 50%; transform: translateX(-50%); width: 16px; height: 26px; }
 
+/* ===== 衛星ボーナス獲得演出（電気ショック風） ===== */
+#bonus-flash {
+  position: fixed; inset: 0; z-index: 400;
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px;
+  background: rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+#bonus-flash.show { display: flex; }
+#bonus-flash-tile {
+  width: 150px; height: 246px;
+  background-size: cover; background-position: center;
+  border-radius: 12px; border: 3px solid #fff;
+  animation: bonusShock 2s ease-in-out 1;
+}
+#bonus-flash-label {
+  font-size: 22px; font-weight: bold; color: #fff; text-align: center;
+  text-shadow: 0 0 10px #000, 0 0 22px #9ff;
+  animation: bonusShock 2s ease-in-out 1;
+}
+@keyframes bonusShock {
+  0%   { opacity: 0; transform: scale(0.6); filter: brightness(1); }
+  4%   { opacity: 1; transform: scale(1.2) rotate(-3deg); filter: brightness(2.6) drop-shadow(0 0 26px #fff); }
+  8%   { opacity: 1; transform: scale(0.9) rotate(3deg); filter: brightness(0.5); }
+  12%  { transform: scale(1.15) rotate(-2deg); filter: brightness(2.6) drop-shadow(0 0 30px #9ff); }
+  16%  { transform: scale(0.95) rotate(2deg); filter: brightness(0.6); }
+  20%  { transform: scale(1.05) rotate(-1deg); filter: brightness(2) drop-shadow(0 0 20px #ff9); }
+  24%  { transform: scale(1) rotate(0deg); filter: brightness(1); }
+  88%  { opacity: 1; transform: scale(1); filter: brightness(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
 /* ===== ミニカード（AI天文台用） ===== */
 .rocket-mini {
   width:26px; height:41px;
@@ -753,6 +785,12 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
     <img id="card-zoom-img" src="">
     <div class="zoom-num" id="card-zoom-num"></div>
   </div>
+</div>
+
+<!-- 衛星ボーナス獲得演出（電気ショック風） -->
+<div id="bonus-flash">
+  <div id="bonus-flash-tile"></div>
+  <div id="bonus-flash-label"></div>
 </div>
 
 <!-- モーダル -->
@@ -2554,12 +2592,14 @@ function execAction(pi,rank,dec,playedCard){
     if(movingCard && !movingCard.faceUp && toEdge==='top' && G.jupiterBonus===null){
       G.jupiterBonus = pi;
       addLog('🪐 '+p.name+'が木星衛星ボーナス(+7点)を獲得！','imp');
+      if(pi===0) showBonusFlash('jupiter','🪐 木星衛星ボーナス獲得！ +7点');
       render();
     }
     // 最初にleft辺に裏向きカードを置いたプレイヤー → 火星衛星（+3点）
     if(movingCard && !movingCard.faceUp && toEdge==='left' && G.marsBonus===null){
       G.marsBonus = pi;
       addLog('🔴 '+p.name+'が火星衛星ボーナス(+3点)を獲得！','imp');
+      if(pi===0) showBonusFlash('mars','🔴 火星衛星ボーナス獲得！ +3点');
       render();
     }
 
@@ -2834,6 +2874,19 @@ function toggleObsBoard(){
 
 function phLbl(ph){
   return {deal:'カードを出す',resolve:'解決中',action:'アクション選択',wait_ai:'AI思考中...',over:'ゲーム終了'}[ph]||ph;
+}
+
+function showBonusFlash(type, label){
+  var overlay=document.getElementById('bonus-flash');
+  var tile=document.getElementById('bonus-flash-tile');
+  var lbl=document.getElementById('bonus-flash-label');
+  if(!overlay || !tile || !lbl) return;
+  tile.className='bonus-tile-'+type;
+  lbl.textContent=label;
+  overlay.classList.remove('show');
+  void overlay.offsetWidth; // アニメーションを再トリガーするための強制リフロー
+  overlay.classList.add('show');
+  setTimeout(function(){ overlay.classList.remove('show'); }, 2000);
 }
 
 function pad2(n){ return n<10?'0'+n:''+n; }
