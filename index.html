@@ -188,21 +188,9 @@ body {
    発射台などの外側のカード置き場（obs-edge）はここでは触らない＝常に実寸のまま */
 .obs-human-large {
   width: 300px; height: 300px;
-  cursor: pointer;
 }
 .obs-human-large .obs-board {
-  transform: scale(0.353);
-  transition: transform 0.2s ease;
-  cursor: pointer;
-}
-.obs-human-large:hover .obs-board {
   transform: scale(1);
-  z-index: 50;
-}
-/* ホバーが効かない環境（タッチ操作など）向けに、タップでも拡大/縮小を切り替えられるようにする */
-.obs-human-large .obs-board.expanded {
-  transform: scale(1) !important;
-  z-index: 50;
 }
 
 /* ===== 天文台エッジ ===== */
@@ -700,7 +688,7 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
       <div class="obs-scale-box" id="scalebox-human">
       <div id="obs-wrap-human">
         <div class="observatory obs-human-large" id="obs-human">
-          <div class="obs-board" id="obs-board-human" onclick="toggleObsBoard()">
+          <div class="obs-board" id="obs-board-human">
             <div class="obs-bg"></div>
             <div class="obs-center" id="oc-human">天文台</div>
           </div>
@@ -2919,11 +2907,6 @@ function render(){
   renderBonusTiles();
   renderHand(ps[0]); renderPlayed();
   resizeHandCards();
-}
-
-function toggleObsBoard(){
-  var b=document.getElementById('obs-board-human');
-  if(b) b.classList.toggle('expanded');
 }
 
 function phLbl(ph){
