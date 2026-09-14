@@ -3085,6 +3085,8 @@ function applyMobilePanel(name){
     if(!el) return;
     el.style.display = (id===name) ? '' : 'none';
   });
+  var top = document.getElementById('persistent-top');
+  if(top) top.style.display = (name==='ai-sidebar') ? 'none' : '';
 }
 
 function switchMobileTab(name){
