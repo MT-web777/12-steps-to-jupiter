@@ -524,18 +524,19 @@ body.tab-mode #hand-col {
 body.tab-mode #hand-area { overflow-y: auto; }
 
 body.tab-mode #obs-area { order: 1; width: 100%; }
-body.tab-mode .played-slot .card { width: 92px; height: 144px; }
-body.tab-mode .played-slot .slot-name { font-size: 14px; }
-body.tab-mode .played-slot .slot-val { font-size: 20px; min-height: 24px; }
 
 body.tab-mode .obs-scale-box { position: relative; margin: 0 auto; }
 
 body.tab-mode #ai-sidebar {
   order: 3; width: 100%; flex-direction: row;
-  overflow-x: auto; overflow-y: hidden; border-left: none;
+  overflow-x: hidden; overflow-y: hidden; border-left: none;
   border-top: 1px solid #1e2a3e;
+  flex: 1 1 auto; height: 0;
 }
-body.tab-mode .player-block { flex-shrink: 0; width: 160px; }
+body.tab-mode .player-block {
+  flex: 1 1 0; width: auto; min-width: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+}
 
 body.tab-mode #header h1 { font-size: 13px; }
 body.tab-mode #log-area { height: 40px; }
@@ -571,8 +572,9 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
   border-bottom: 2px solid transparent;
   color: #8899bb;
   font-family: inherit;
-  font-size: 12px;
-  padding: 9px 2px;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 12px 2px;
   line-height: 1.3;
 }
 .mtab-btn.active {
@@ -3010,11 +3012,12 @@ function resizeObsHuman(){
 function resizeObsAi(){
   var sidebar = document.getElementById('ai-sidebar');
   var block1 = document.getElementById('block-ai1');
-  if(!sidebar || !block1) return;
-  var availW = Math.floor(sidebar.clientWidth/2) - 24;
-  var availH = block1.clientHeight - 70; // ラベル・戦法バッジ・手札枚数表示の高さ分を概算で除く
+  var block2 = document.getElementById('block-ai2');
+  if(!sidebar || !block1 || !block2) return;
+  var availW = Math.floor(sidebar.clientWidth/2) - 16;
+  var availH = sidebar.clientHeight - 90; // ラベル・戦法バッジ・手札枚数表示の高さ分を概算で除く
   if(availW<=0) return;
-  if(availH<=0) availH = 130;
+  if(availH<=0) availH = 140;
   fitObsScale('scalebox-ai1','obs-wrap-ai1', availW, availH);
   fitObsScale('scalebox-ai2','obs-wrap-ai2', availW, availH);
 }
@@ -3080,8 +3083,10 @@ function resizeHandCards(){
   }
   var cardW = Math.max(56, Math.min(bestW, 170));
   var cardH = Math.floor(cardW * 89 / 57);
+  var nameFont = Math.round(cardW * 0.18);
+  var valFont = Math.round(cardW * 0.24);
 
-  // CSSに適用
+  // CSSに適用（場に出したカードも手札と同じサイズにする）
   var style = document.getElementById('hand-card-size-style');
   if(!style){
     style = document.createElement('style');
@@ -3089,7 +3094,9 @@ function resizeHandCards(){
     document.head.appendChild(style);
   }
   style.textContent =
-    '#hand-area .card { width:'+cardW+'px !important; height:'+cardH+'px !important; }';
+    '#hand-area .card, .played-slot .card { width:'+cardW+'px !important; height:'+cardH+'px !important; }'+
+    '.played-slot .slot-name { font-size:'+nameFont+'px !important; }'+
+    '.played-slot .slot-val { font-size:'+valFont+'px !important; min-height:'+Math.round(valFont*1.3)+'px !important; }';
 }
 
 window.addEventListener('load',function(){
