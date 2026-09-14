@@ -101,6 +101,12 @@ body {
   flex-shrink: 0;
 }
 #played-area { display:flex; gap:3px; flex-wrap: wrap; }
+#persistent-top {
+  flex-shrink: 0; display: flex; flex-direction: column; gap: 8px;
+  padding: 8px 10px; background: rgba(8,14,26,0.75);
+  border-bottom: 1px solid #1e2a3e;
+}
+#persistent-top #played-area { justify-content: center; }
 
 #obs-area {
   flex: 1;
@@ -393,6 +399,7 @@ body {
 .abtn:hover:not(:disabled) { background:#253a60; border-color:#c8b86a; }
 .abtn:disabled { opacity:0.35; cursor:default; }
 .abtn.primary { border-color:#c8b86a; color:#f0d060; }
+#persistent-top #action-panel { max-width: none; width: 100%; }
 
 /* ===== ログ（画面下部・横スクロール） ===== */
 #log-area {
@@ -528,15 +535,17 @@ body.tab-mode #obs-area { order: 1; width: 100%; }
 body.tab-mode .obs-scale-box { position: relative; margin: 0 auto; }
 
 body.tab-mode #ai-sidebar {
-  order: 3; width: 100%; flex-direction: row;
-  overflow-x: hidden; overflow-y: hidden; border-left: none;
+  order: 3; width: 100%; flex-direction: column;
+  overflow-x: hidden; overflow-y: auto; border-left: none;
   border-top: 1px solid #1e2a3e;
   flex: 1 1 auto; height: 0;
 }
+#ai-row { display: flex; flex-direction: row; flex: 1.2 1 0; min-height: 0; gap: 6px; }
 body.tab-mode .player-block {
   flex: 1 1 0; width: auto; min-width: 0;
   display: flex; flex-direction: column; overflow: hidden;
 }
+#block-humanmini { flex: 1 1 0; min-height: 0; border-top: 1px dashed #2a3a5a; padding-top: 6px; }
 
 body.tab-mode #header h1 { font-size: 13px; }
 body.tab-mode #log-area { height: 40px; }
@@ -551,7 +560,8 @@ body.tab-mode .slot-val { font-size: 16px !important; }
 body.tab-mode .player-label { font-size: 13px !important; }
 body.tab-mode .strategy-badge, body.tab-mode .gold-badge { font-size: 11px !important; }
 body.tab-mode .log-e { font-size: 13px !important; }
-body.tab-mode #action-panel h3 { font-size: 13px !important; }
+body.tab-mode #action-panel h3 { font-size: 15px !important; }
+body.tab-mode .abtn { font-size: 15px !important; padding: 10px 12px !important; }
 body.tab-mode .abtn { font-size: 13px !important; padding: 8px 10px !important; }
 body.tab-mode #mbox h2 { font-size: 16px !important; }
 body.tab-mode #mbox p { font-size: 14px !important; }
@@ -600,6 +610,31 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
   <button type="button" class="mtab-btn" data-tab="ai-sidebar" onclick="switchMobileTab('ai-sidebar')">対戦相手</button>
 </div>
 
+<!-- 常時表示：場に出した3枚とアクション選択（タブを切り替えても消えない） -->
+<div id="persistent-top">
+  <div id="played-area">
+    <div class="played-slot">
+      <div class="slot-name">あなた</div>
+      <div class="card face-down" id="pc-human"><span style="font-size:9px;color:#334">?</span></div>
+      <div class="slot-val" id="pv-human">-</div>
+    </div>
+    <div class="played-slot">
+      <div class="slot-name">AI 1</div>
+      <div class="card face-down" id="pc-ai1"><span style="font-size:9px;color:#334">?</span></div>
+      <div class="slot-val" id="pv-ai1">-</div>
+    </div>
+    <div class="played-slot">
+      <div class="slot-name">AI 2</div>
+      <div class="card face-down" id="pc-ai2"><span style="font-size:9px;color:#334">?</span></div>
+      <div class="slot-val" id="pv-ai2">-</div>
+    </div>
+  </div>
+  <div id="action-panel">
+    <h3 id="ap-title">待機中</h3>
+    <div id="ap-btns"></div>
+  </div>
+</div>
+
 <div id="main">
 
   <!-- 左：手札（上）＋出す場（下） -->
@@ -608,23 +643,6 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
     <div id="hand-area"></div>
     <!-- 出す場（左下） -->
     <div id="center-area">
-      <div id="played-area">
-        <div class="played-slot">
-          <div class="slot-name">あなた</div>
-          <div class="card face-down" id="pc-human"><span style="font-size:9px;color:#334">?</span></div>
-          <div class="slot-val" id="pv-human">-</div>
-        </div>
-        <div class="played-slot">
-          <div class="slot-name">AI 1</div>
-          <div class="card face-down" id="pc-ai1"><span style="font-size:9px;color:#334">?</span></div>
-          <div class="slot-val" id="pv-ai1">-</div>
-        </div>
-        <div class="played-slot">
-          <div class="slot-name">AI 2</div>
-          <div class="card face-down" id="pc-ai2"><span style="font-size:9px;color:#334">?</span></div>
-          <div class="slot-val" id="pv-ai2">-</div>
-        </div>
-      </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <div id="discard-wrap">
           <div class="area-label">捨て札 <span id="disc-cnt">0</span>枚</div>
@@ -633,10 +651,6 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
         <div id="deck-wrap">
           <div class="area-label">山札 <span id="deck-count">-</span>枚</div>
         </div>
-      </div>
-      <div id="action-panel">
-        <h3 id="ap-title">待機中</h3>
-        <div id="ap-btns"></div>
       </div>
     </div>
   </div>
@@ -662,8 +676,9 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
       </div>
     </div>
   </div>
-  <!-- 右サイドバー：AI1・AI2縦並び -->
+  <!-- 右サイドバー：AI1・AI2並び＋比較用の人間ミニ表示 -->
   <div id="ai-sidebar">
+    <div id="ai-row">
     <div class="player-block" id="block-ai1">
       <div class="player-label" id="lbl-ai1">AI 1　<span class="score" id="sc-ai1">0点</span></div>
       <div class="ai-status-row">
@@ -703,6 +718,23 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
       </div>
       </div>
       <div class="area-label">手札 <span id="hc-ai2">12</span>枚</div>
+    </div>
+    </div><!-- /ai-row -->
+    <div class="player-block" id="block-humanmini">
+      <div class="player-label" id="lbl-humanmini">あなた　<span class="score" id="sc-humanmini">0点</span></div>
+      <div class="obs-scale-box" id="scalebox-humanmini">
+      <div id="obs-wrap-humanmini">
+        <div class="observatory obs-ai" id="obs-humanmini">
+          <div class="obs-bg"></div>
+          <div class="obs-edge obs-top"    id="oe-humanmini-top"></div>
+          <div class="obs-edge obs-left"   id="oe-humanmini-left"></div>
+          <div class="obs-edge obs-right"  id="oe-humanmini-right"></div>
+          <div class="obs-edge obs-bottom" id="oe-humanmini-bottom"></div>
+          <div class="obs-center" id="oc-humanmini">天文台</div>
+        </div>
+      </div>
+      </div>
+      <div class="area-label">手札 <span id="hc-humanmini">12</span>枚</div>
     </div>
   </div><!-- /ai-sidebar -->
   </div><!-- /obs-area -->
@@ -2257,6 +2289,7 @@ function dealPhase(){
   var p=G.players[pi];
   if(p.isHuman){
     // 人間の番：手札クリックを待つ
+    switchMobileTab('hand-col');
     render();
     setAP('手札からカードを選んでください',[]);
     addLog('あなたの番：手札をクリックしてください','you');
@@ -2337,6 +2370,7 @@ function doAiAction(){
 }
 
 function showHumanAction(p,rank){
+  switchMobileTab('obs-area');
   var face=p.obs.isGold?'gold':'gray';
   var tier=rank===0?'top':rank===1?'mid':'bot';
   var steps=SUMMARY[face][tier];
@@ -2758,6 +2792,8 @@ function render(){
   document.getElementById('sc-human').textContent=calcScore(ps[0])+'点';
   document.getElementById('sc-ai1').textContent=calcScore(ps[1])+'点';
   document.getElementById('sc-ai2').textContent=calcScore(ps[2])+'点';
+  var hcMini=document.getElementById('hc-humanmini'); if(hcMini) hcMini.textContent=ps[0].hand.length;
+  var scMini=document.getElementById('sc-humanmini'); if(scMini) scMini.textContent=calcScore(ps[0])+'点';
 
   // 衛星ボーナスアイコン表示
   if(G){
@@ -2785,7 +2821,7 @@ function render(){
   if(gold1){ gold1.textContent = ps[1].obs.isGold?'🌟 金色化':'🌑 通常'; gold1.classList.toggle('is-gold',ps[1].obs.isGold); }
   if(gold2){ gold2.textContent = ps[2].obs.isGold?'🌟 金色化':'🌑 通常'; gold2.classList.toggle('is-gold',ps[2].obs.isGold); }
 
-  renderObs('human',ps[0]); renderObs('ai1',ps[1]); renderObs('ai2',ps[2]);
+  renderObs('human',ps[0]); renderObs('ai1',ps[1]); renderObs('ai2',ps[2]); renderObs('humanmini',ps[0]);
   renderBonusTiles();
   renderHand(ps[0]); renderPlayed();
   resizeHandCards();
@@ -3010,16 +3046,26 @@ function resizeObsHuman(){
 }
 
 function resizeObsAi(){
-  var sidebar = document.getElementById('ai-sidebar');
+  var aiRow = document.getElementById('ai-row');
   var block1 = document.getElementById('block-ai1');
   var block2 = document.getElementById('block-ai2');
-  if(!sidebar || !block1 || !block2) return;
-  var availW = Math.floor(sidebar.clientWidth/2) - 16;
-  var availH = sidebar.clientHeight - 90; // ラベル・戦法バッジ・手札枚数表示の高さ分を概算で除く
+  if(!aiRow || !block1 || !block2) return;
+  var availW = Math.floor(aiRow.clientWidth/2) - 16;
+  var availH = aiRow.clientHeight - 90; // ラベル・戦法バッジ・手札枚数表示の高さ分を概算で除く
   if(availW<=0) return;
-  if(availH<=0) availH = 140;
+  if(availH<=0) availH = 130;
   fitObsScale('scalebox-ai1','obs-wrap-ai1', availW, availH);
   fitObsScale('scalebox-ai2','obs-wrap-ai2', availW, availH);
+}
+
+function resizeHumanMini(){
+  var block = document.getElementById('block-humanmini');
+  if(!block) return;
+  var availW = block.clientWidth - 16;
+  var availH = block.clientHeight - 40;
+  if(availW<=0) return;
+  if(availH<=0) availH = 130;
+  fitObsScale('scalebox-humanmini','obs-wrap-humanmini', availW, availH);
 }
 
 function resizeActiveTab(){
@@ -3027,7 +3073,7 @@ function resizeActiveTab(){
   var tab = activeBtn ? activeBtn.getAttribute('data-tab') : 'hand-col';
   if(tab==='hand-col') resizeHandCards();
   else if(tab==='obs-area') resizeObsHuman();
-  else if(tab==='ai-sidebar') resizeObsAi();
+  else if(tab==='ai-sidebar'){ resizeObsAi(); resizeHumanMini(); }
 }
 
 // ===== 3パートのタブ切り替え（常時オン。画面幅の判定には依存しない） =====
@@ -3048,7 +3094,7 @@ function switchMobileTab(name){
   applyMobilePanel(name);
   if(name==='hand-col') resizeHandCards();
   else if(name==='obs-area') resizeObsHuman();
-  else if(name==='ai-sidebar') resizeObsAi();
+  else if(name==='ai-sidebar'){ resizeObsAi(); resizeHumanMini(); }
 }
 
 function updateMobileLayout(){
