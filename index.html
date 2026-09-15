@@ -3147,9 +3147,9 @@ function buildAmbientGraph(ctx){
   pulseGain.connect(master);
 
   var osc1 = ctx.createOscillator();
-  osc1.type = 'sine'; osc1.frequency.value = 55;      // A1
+  osc1.type = 'triangle'; osc1.frequency.value = 220;      // A3（オクターブ上げて少し明るい音色に）
   var osc2 = ctx.createOscillator();
-  osc2.type = 'sine'; osc2.frequency.value = 55*1.5;  // 完全5度上（E2）で厚みを出すだけ
+  osc2.type = 'sine'; osc2.frequency.value = 330;          // 完全5度上（E4）で厚みを出すだけ
   osc1.connect(pulseGain); osc2.connect(pulseGain);
 
   osc1.start(); osc2.start();
