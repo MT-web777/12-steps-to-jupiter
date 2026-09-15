@@ -3165,6 +3165,14 @@ function resizeHumanMini(){
 }
 
 function resizeActiveTab(){
+  if(!isNarrowScreen()){
+    // PC表示：3カラムすべてを常時リサイズ
+    resizeHandCards();
+    resizeObsHuman();
+    resizeObsAi();
+    resizeHumanMini();
+    return;
+  }
   var activeBtn = document.querySelector('.mtab-btn.active');
   var tab = activeBtn ? activeBtn.getAttribute('data-tab') : 'hand-col';
   if(tab==='hand-col') resizeHandCards();
@@ -3172,8 +3180,13 @@ function resizeActiveTab(){
   else if(tab==='ai-sidebar'){ resizeObsAi(); resizeHumanMini(); }
 }
 
-// ===== 3パートのタブ切り替え（常時オン。画面幅の判定には依存しない） =====
+// ===== 3パートのタブ切り替え（画面幅が狭い時のみオン。PCでは3カラム同時表示） =====
 var MOBILE_TAB_PANELS = ['hand-col','obs-area','ai-sidebar'];
+var MOBILE_BREAKPOINT = 900; // これより狭い画面幅ではタブ切り替えUIを使う
+
+function isNarrowScreen(){
+  return window.innerWidth < MOBILE_BREAKPOINT;
+}
 
 function applyMobilePanel(name){
   MOBILE_TAB_PANELS.forEach(function(id){
@@ -3189,6 +3202,8 @@ function switchMobileTab(name){
   document.querySelectorAll('.mtab-btn').forEach(function(btn){
     btn.classList.toggle('active', btn.getAttribute('data-tab')===name);
   });
+  // PC等の広い画面では常に3カラム表示のまま。狭い画面の時だけ実際にタブを切り替える。
+  if(!isNarrowScreen()) return;
   applyMobilePanel(name);
   if(name==='hand-col') resizeHandCards();
   else if(name==='obs-area') resizeObsHuman();
@@ -3196,9 +3211,23 @@ function switchMobileTab(name){
 }
 
 function updateMobileLayout(){
-  document.body.classList.add('tab-mode');
-  var activeBtn = document.querySelector('.mtab-btn.active');
-  applyMobilePanel(activeBtn ? activeBtn.getAttribute('data-tab') : 'hand-col');
+  var tabsBar = document.getElementById('mobile-tabs');
+  if(isNarrowScreen()){
+    document.body.classList.add('tab-mode');
+    if(tabsBar) tabsBar.style.display = '';
+    var activeBtn = document.querySelector('.mtab-btn.active');
+    applyMobilePanel(activeBtn ? activeBtn.getAttribute('data-tab') : 'hand-col');
+  } else {
+    // PC等の広い画面：タブ切り替えUIをやめ、3カラムを同時表示する
+    document.body.classList.remove('tab-mode');
+    if(tabsBar) tabsBar.style.display = 'none';
+    MOBILE_TAB_PANELS.forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.style.display = '';
+    });
+    var top = document.getElementById('persistent-top');
+    if(top) top.style.display = '';
+  }
 }
 
 // ========== 起動 ==========
@@ -3250,8 +3279,9 @@ window.addEventListener('load',function(){
     initGame();
   });
   resizeHandCards();
-  window.addEventListener('resize', resizeActiveTab);
   updateMobileLayout();
+  resizeActiveTab();
+  window.addEventListener('resize', function(){ updateMobileLayout(); resizeActiveTab(); });
   showModal('木星に向かう12のステップ',
     'AI 2体と対戦します。\n手札12枚を使って最高得点を目指してください。',
     [{label:'ゲーム開始',fn:function(){ closeModal(); initGame(); }}],
