@@ -37,6 +37,21 @@ body {
   cursor: pointer; flex-shrink: 0; padding: 0;
 }
 #help-btn:hover { background: rgba(200,184,106,0.3); }
+#ambient-btn {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(90,122,170,0.15); border: 1px solid #5a7aaa;
+  color: #8ea6d0; font-size: 12px; font-weight: bold; line-height: 1;
+  cursor: pointer; flex-shrink: 0; padding: 0;
+}
+#ambient-btn.on {
+  background: rgba(90,122,170,0.35); color: #c8d8f0; border-color: #8ea6d0;
+  animation: ambientPulse 2.6s ease-in-out infinite;
+}
+#ambient-btn:hover { background: rgba(90,122,170,0.3); }
+@keyframes ambientPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(142,166,208,0.5); }
+  50% { box-shadow: 0 0 6px 3px rgba(142,166,208,0.35); }
+}
 
 /* ===== ルール解説（モーダル内） ===== */
 #m-extra { margin: 0 0 10px; }
@@ -627,6 +642,7 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
   <div class="status">
     <span id="rnd">ラウンド 1</span>　<span id="phase">準備中</span>
     <button type="button" id="help-btn" onclick="showRulesModal()" title="遊び方">？</button>
+    <button type="button" id="ambient-btn" onclick="toggleAmbient()" title="環境音（パルス）のON/OFF">♪</button>
   </div>
 </div>
 
@@ -3111,6 +3127,62 @@ var RULES_HTML =
 
 function showRulesModal(){
   showModal('遊び方（かんたん版）','',[{label:'閉じる',fn:closeModal}],RULES_HTML);
+}
+
+// ===== 環境音（パルス） =====
+// 録音素材・既存曲は一切使わず、Web Audio APIで音をその場で合成するだけ。
+// 低い持続音（パッド）2本を重ね、ゆっくりしたLFOで音量を上下させて
+// 「静かに脈打つ」ような雰囲気を作る。著作権的に問題になる要素は含まない。
+var AMB = { ctx:null, nodes:null, on:false };
+
+function buildAmbientGraph(ctx){
+  var master = ctx.createGain();
+  master.gain.value = 0.0001;
+  master.connect(ctx.destination);
+
+  var osc1 = ctx.createOscillator();
+  osc1.type = 'sine'; osc1.frequency.value = 55;      // A1
+  var osc2 = ctx.createOscillator();
+  osc2.type = 'sine'; osc2.frequency.value = 55*1.5;  // 完全5度上（E2）で厚みを出すだけ
+
+  var padGain = ctx.createGain();
+  padGain.gain.value = 0.35;
+  osc1.connect(padGain); osc2.connect(padGain);
+  padGain.connect(master);
+
+  // ゆっくりしたパルス（約8秒周期）でパッドの音量を静かに揺らす
+  var lfo = ctx.createOscillator();
+  lfo.type = 'sine'; lfo.frequency.value = 0.12;
+  var lfoGain = ctx.createGain();
+  lfoGain.gain.value = 0.15;
+  lfo.connect(lfoGain);
+  lfoGain.connect(padGain.gain);
+
+  osc1.start(); osc2.start(); lfo.start();
+  return { master:master, osc1:osc1, osc2:osc2, lfo:lfo, padGain:padGain, lfoGain:lfoGain };
+}
+
+function toggleAmbient(){
+  var btn = document.getElementById('ambient-btn');
+  if(!AMB.ctx){
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return; // 未対応ブラウザでは何もしない
+    AMB.ctx = new AC();
+    AMB.nodes = buildAmbientGraph(AMB.ctx);
+  }
+  if(AMB.ctx.state === 'suspended') AMB.ctx.resume();
+  var now = AMB.ctx.currentTime;
+  AMB.nodes.master.gain.cancelScheduledValues(now);
+  AMB.nodes.master.gain.setValueAtTime(AMB.nodes.master.gain.value, now);
+  if(!AMB.on){
+    AMB.nodes.master.gain.linearRampToValueAtTime(0.05, now+1.5); // 全体音量は控えめ固定
+    AMB.on = true;
+    if(btn) btn.classList.add('on');
+  } else {
+    AMB.nodes.master.gain.linearRampToValueAtTime(0.0001, now+1.0);
+    AMB.on = false;
+    if(btn) btn.classList.remove('on');
+  }
 }
 
 // ===== 天文台（あなた／AI）の表示を、タブの余白いっぱいに拡大縮小 =====
