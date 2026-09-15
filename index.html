@@ -3131,35 +3131,50 @@ function showRulesModal(){
 
 // ===== 環境音（パルス） =====
 // 録音素材・既存曲は一切使わず、Web Audio APIで音をその場で合成するだけ。
-// 低い持続音（パッド）2本を重ね、ゆっくりしたLFOで音量を上下させて
-// 「静かに脈打つ」ような雰囲気を作る。著作権的に問題になる要素は含まない。
-var AMB = { ctx:null, nodes:null, on:false };
+// 低い持続音（パッド）2本を重ね、「ふわん、わん、わん、わ」と減衰していく
+// パルスの繰り返しで音量を動かす。著作権的に問題になる要素は含まない。
+var AMB = { ctx:null, nodes:null, on:false, timer:null };
+var AMB_FLOOR = 0.02;     // パルスとパルスの間の最小音量
+var AMB_CYCLE_SEC = 6.5;  // 1サイクル（パルス列＋静けさ）の長さ
 
 function buildAmbientGraph(ctx){
   var master = ctx.createGain();
   master.gain.value = 0.0001;
   master.connect(ctx.destination);
 
+  var pulseGain = ctx.createGain();
+  pulseGain.gain.value = AMB_FLOOR;
+  pulseGain.connect(master);
+
   var osc1 = ctx.createOscillator();
   osc1.type = 'sine'; osc1.frequency.value = 55;      // A1
   var osc2 = ctx.createOscillator();
   osc2.type = 'sine'; osc2.frequency.value = 55*1.5;  // 完全5度上（E2）で厚みを出すだけ
+  osc1.connect(pulseGain); osc2.connect(pulseGain);
 
-  var padGain = ctx.createGain();
-  padGain.gain.value = 0.35;
-  osc1.connect(padGain); osc2.connect(padGain);
-  padGain.connect(master);
+  osc1.start(); osc2.start();
+  return { master:master, pulseGain:pulseGain, osc1:osc1, osc2:osc2 };
+}
 
-  // ゆっくりしたパルス（約8秒周期）でパッドの音量を静かに揺らす
-  var lfo = ctx.createOscillator();
-  lfo.type = 'sine'; lfo.frequency.value = 0.12;
-  var lfoGain = ctx.createGain();
-  lfoGain.gain.value = 0.15;
-  lfo.connect(lfoGain);
-  lfoGain.connect(padGain.gain);
+// 「ふわん、わん、わん、わ」＝ だんだん小さくなる4回のパルスを1サイクル分予約する
+function scheduleAmbientPulses(ctx, gainParam, startTime){
+  var peaks   = [0.26, 0.15, 0.09, 0.05]; // 各パルスの大きさ（だんだん小さく）
+  var attacks = [0.35, 0.12, 0.10, 0.08]; // 最初の「ふわん」だけゆっくり立ち上がる
+  var t = startTime;
+  gainParam.cancelScheduledValues(t);
+  gainParam.setValueAtTime(AMB_FLOOR, t);
+  peaks.forEach(function(peak, i){
+    gainParam.linearRampToValueAtTime(peak, t + attacks[i]);
+    t += attacks[i];
+    gainParam.setTargetAtTime(AMB_FLOOR, t, 0.35); // 自然に減衰して床の音量へ戻る
+    t += 0.55;
+  });
+}
 
-  osc1.start(); osc2.start(); lfo.start();
-  return { master:master, osc1:osc1, osc2:osc2, lfo:lfo, padGain:padGain, lfoGain:lfoGain };
+function ambientLoop(){
+  if(!AMB.on || !AMB.ctx || !AMB.nodes) return;
+  scheduleAmbientPulses(AMB.ctx, AMB.nodes.pulseGain.gain, AMB.ctx.currentTime + 0.05);
+  AMB.timer = setTimeout(ambientLoop, AMB_CYCLE_SEC*1000);
 }
 
 function toggleAmbient(){
@@ -3175,13 +3190,15 @@ function toggleAmbient(){
   AMB.nodes.master.gain.cancelScheduledValues(now);
   AMB.nodes.master.gain.setValueAtTime(AMB.nodes.master.gain.value, now);
   if(!AMB.on){
-    AMB.nodes.master.gain.linearRampToValueAtTime(0.05, now+1.5); // 全体音量は控えめ固定
+    AMB.nodes.master.gain.linearRampToValueAtTime(1, now+0.8);
     AMB.on = true;
     if(btn) btn.classList.add('on');
+    ambientLoop();
   } else {
     AMB.nodes.master.gain.linearRampToValueAtTime(0.0001, now+1.0);
     AMB.on = false;
     if(btn) btn.classList.remove('on');
+    if(AMB.timer) clearTimeout(AMB.timer);
   }
 }
 
