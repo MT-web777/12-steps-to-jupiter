@@ -1364,8 +1364,9 @@ function lookaheadScore(p, firstMove, steps1, le){
 function aiIntendedRank(p, pi){
   var hand = p.hand;
   var stacks = p.obs.stacks;
+  var le = launchEdge(p.obs);
   var constStack = (stacks['bottom']||[]).length;
-  var launchSt = (stacks[launchEdge(p.obs)]||[]).length;
+  var launchSt = (stacks[le]||[]).length;
   var topSt = (stacks['top']||[]).length;
   var leftSt = (stacks['left']||[]).length;
   var obsTotal = obsCardTotal(stacks);
