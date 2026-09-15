@@ -1203,6 +1203,8 @@ function getSabotageValue(targetPi){
   val += topLeft * 2;
   // 相手のスコアが高いほど妨害価値が高い（リーダーを叩く）
   val += calcScore(target) * 0.2;
+  // 人間（pi=0）は本来の対戦相手：他条件が拮抗する場合は人間を優先して妨害する
+  if(targetPi === 0) val += 8;
   return val;
 }
 
@@ -1652,7 +1654,7 @@ function aiPickCard(p){
     // ビハインドが大きい時・手札が少ない時は無理せず従来の比率方式に任せる（安全マージンの精度が落ちるため）。
     if(predictedRemaining.length > 0 && handSize >= 5 && !(oppProg.isBehind && oppProg.deficit > 8)){
       var predMaxForTop = Math.max.apply(null, predictedRemaining);
-      var neededMargin = 20; // シミュレーションで検証済みの安全マージン（人間役1人+AIパートナー2人の構成で再検証し、20が最適に近いことを確認済み）
+      var neededMargin = 14; // シミュレーションで検証済みの安全マージン（人間役1人+AIパートナー2人の構成で再検証し、14が最適に近いことを確認済み）
       for(var i=0; i<sorted.length; i++){
         if(sorted[i].value >= predMaxForTop + neededMargin){
           return sorted[i];
