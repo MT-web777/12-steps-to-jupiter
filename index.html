@@ -165,7 +165,7 @@ body {
 .observatory {
   position: relative;
   border: 2px solid #3a4a7a;
-  border-radius: 10px;
+  border-radius: 16px;
   flex-shrink: 0;
 }
 .observatory.gold { border-color: #b8960a; }
@@ -174,9 +174,9 @@ body {
    .observatory自体はedge（発射台などの外側にはみ出す部分）を隠したくないのでoverflow:visibleのまま */
 .obs-bg {
   position: absolute; inset: 0;
-  border-radius: 8px;
+  border-radius: 14px;
   overflow: hidden;
-  background-size: contain;
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   z-index: 0;
@@ -195,14 +195,14 @@ body {
 
 /* AI用：160×160px */
 .obs-ai {
-  width: 160px; height: 160px;
+  width: 160px; height: 250px;
 }
 
 /* 人間用：300×300px。天文台の盤面（obs-board）だけがロケットカードと
    同じくらいの大きさ（高さ106px基準）に縮小表示され、カーソルを乗せると実寸に拡大する。
    発射台などの外側のカード置き場（obs-edge）はここでは触らない＝常に実寸のまま */
 .obs-human-large {
-  width: 300px; height: 300px;
+  width: 300px; height: 468px;
 }
 .obs-human-large .obs-board {
   transform: scale(1);
@@ -265,7 +265,7 @@ body {
   width: 22px; height: 36px;
   background-size: cover;
   background-position: center;
-  border-radius: 3px;
+  border-radius: 6px;
   border: 1px solid #6a7aa0;
   box-shadow: 0 0 4px rgba(0,0,0,0.6);
   pointer-events: none;
@@ -330,7 +330,7 @@ body {
 /* ===== ミニカード（AI天文台用） ===== */
 .rocket-mini {
   width:26px; height:41px;
-  border-radius:2px; border:1px solid #3a4a7a;
+  border-radius:5px; border:1px solid #3a4a7a;
   background:#1a2240; overflow:hidden;
   display:inline-flex; align-items:center; justify-content:center;
   font-size:7px; color:#8899bb; flex-shrink:0;
@@ -341,7 +341,7 @@ body {
 /* ===== ブリッジカード（人間天文台用・手札と同サイズ） ===== */
 .rocket-bridge {
   width:68px; height:106px;
-  border-radius:3px; border:1px solid #3a4a7a;
+  border-radius:8px; border:1px solid #3a4a7a;
   background:#1a2240; overflow:hidden;
   display:inline-flex; align-items:center; justify-content:center;
   font-size:8px; color:#8899bb; flex-shrink:0; position:relative;
@@ -385,7 +385,7 @@ body {
 /* ===== カード（手札・場）57×89px ===== */
 .card {
   width:57px; height:89px;
-  border-radius:3px; border:1px solid #3a4a7a;
+  border-radius:8px; border:1px solid #3a4a7a;
   background:#1a2240; position:relative; overflow:hidden;
   display:flex; align-items:center; justify-content:center;
   font-size:11px; font-weight:bold; color:#c8d8f0;
@@ -408,7 +408,7 @@ body {
 /* ===== 手札カード：少し大きく ===== */
 #hand-area .card {
   width:130px; height:203px;
-  border-radius:5px;
+  border-radius:12px;
 }
 #hand-area .card .cnum { font-size:18px; top:5px; left:7px; }
 #hand-area .card.selectable:hover { transform:translateY(-20px); }
