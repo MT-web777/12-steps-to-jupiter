@@ -2652,6 +2652,7 @@ function enterCardSelectMode(pi,rank,steps,playedCard){
     {label:'キャンセル', fn:function(){ G_cardSelect=null; showHumanAction(p,rank); render(); }}
   ]);
   renderObs('human',p); // タップ可能状態で再描画
+  resizeObsHuman();
 }
 
 function tapObsCard(edge){
@@ -3481,7 +3482,11 @@ function resizeObsHuman(){
   var availW = (obsArea ? obsArea.clientWidth : window.innerWidth) - 8;
   var naturalW = wrap.offsetWidth;
   var naturalH = wrap.offsetHeight;
-  if(availW<=0 || naturalW<=0) return;
+  if(availW<=0 || naturalW<=0){
+    // 表示切替直後でレイアウトがまだ確定していない可能性があるため、次フレームで再試行する
+    if(typeof requestAnimationFrame==='function') requestAnimationFrame(resizeObsHuman);
+    return;
+  }
   var scale = Math.min(1, availW / naturalW);
   wrap.style.transformOrigin = 'top center';
   wrap.style.transform = 'scale('+scale+')';
