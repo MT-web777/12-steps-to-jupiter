@@ -3459,15 +3459,34 @@ function fitObsScale(boxId, wrapId, availW, availH){
 }
 
 function resizeObsHuman(){
-  // 操作対象（タップで移動先を選ぶ）の天文台は、拡大縮小の変換をかけると
-  // タップ判定がずれる恐れがあるため、常に実寸で表示し、
-  // はみ出す分は obs-area のスクロールに任せる。
   var box = document.getElementById('scalebox-human');
   var wrap = document.getElementById('obs-wrap-human');
   if(!box || !wrap) return;
+
+  if(!isNarrowScreen()){
+    // PC等の広い画面では常に実寸表示
+    wrap.style.transform = 'none';
+    box.style.width = '';
+    box.style.height = '';
+    return;
+  }
+
+  // スマホ幅では、横にはみ出すと横スクロールが必要になりタップしづらいので、
+  // 横幅だけ画面に収まるよう縮小する（縦は自然な縦スクロールに任せる）。
+  // CSSのtransform:scaleはタップ座標も一緒に変換されるため、判定ズレは起きない。
   wrap.style.transform = 'none';
   box.style.width = '';
   box.style.height = '';
+  var obsArea = document.getElementById('obs-area');
+  var availW = (obsArea ? obsArea.clientWidth : window.innerWidth) - 8;
+  var naturalW = wrap.offsetWidth;
+  var naturalH = wrap.offsetHeight;
+  if(availW<=0 || naturalW<=0) return;
+  var scale = Math.min(1, availW / naturalW);
+  wrap.style.transformOrigin = 'top center';
+  wrap.style.transform = 'scale('+scale+')';
+  box.style.width = Math.round(naturalW*scale)+'px';
+  box.style.height = Math.round(naturalH*scale)+'px';
 }
 
 function resizeObsAi(){
