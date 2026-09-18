@@ -30,6 +30,7 @@ body {
 #header h1 { font-size: 15px; color: #c8b86a; margin: 0; }
 #header .status { font-size: 12px; color: #8899bb; }
 #header .status { display: flex; align-items: center; gap: 10px; }
+#seed-label { font-size: 11px; color: #e0578a; }
 #help-btn {
   width: 22px; height: 22px; border-radius: 50%;
   background: rgba(200,184,106,0.15); border: 1px solid #c8b86a;
@@ -37,6 +38,13 @@ body {
   cursor: pointer; flex-shrink: 0; padding: 0;
 }
 #help-btn:hover { background: rgba(200,184,106,0.3); }
+#daily-btn {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(224,87,138,0.15); border: 1px solid #e0578a;
+  color: #e0578a; font-size: 12px; font-weight: bold; line-height: 1;
+  cursor: pointer; flex-shrink: 0; padding: 0;
+}
+#daily-btn:hover { background: rgba(224,87,138,0.3); }
 #ambient-btn {
   width: 22px; height: 22px; border-radius: 50%;
   background: rgba(90,122,170,0.15); border: 1px solid #5a7aaa;
@@ -405,6 +413,25 @@ body {
 .card.selected { transform:translateY(-14px); border-color:#f0d060; box-shadow:0 6px 18px rgba(240,208,96,0.6); }
 .card.played-card { border-color:#c8b86a; }
 
+/* ===== 交信・遭遇：捨て札/手札を実カードで選ばせるグリッド ===== */
+.card-select-grid {
+  display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+  margin: 4px 0 4px;
+}
+.card-select-grid .card, .card-select-chosen .card {
+  width:114px; height:178px; border-radius:12px;
+}
+.card-select-grid .card .cnum, .card-select-chosen .card .cnum {
+  font-size:16px; top:4px; left:6px;
+}
+.card-select-chosen { display:flex; justify-content:center; margin-bottom:2px; }
+.card-select-hint { text-align:center; font-size:10px; color:#6a80a0; margin-bottom:10px; }
+.card-self-badge {
+  position:absolute; left:0; right:0; bottom:0; text-align:center;
+  font-size:10px; font-weight:bold; color:#0e1828;
+  background:rgba(240,208,96,0.9); padding:2px 0;
+}
+
 /* ===== 手札カード：少し大きく ===== */
 #hand-area .card {
   width:130px; height:203px;
@@ -463,7 +490,7 @@ body {
 #mbox {
   background:#0e1828; border:1px solid #3a5a8a;
   border-radius:6px; padding:20px 24px;
-  min-width:260px; max-width:400px; max-height:80vh; overflow-y:auto;
+  min-width:260px; max-width:420px; max-height:80vh; overflow-y:auto;
 }
 #mbox h2 { font-size:14px; color:#c8b86a; margin:0 0 10px; }
 #mbox p  { font-size:13px; color:#aab8cc; margin:0 0 12px; line-height:1.5; white-space:pre-line; }
@@ -522,7 +549,7 @@ body {
 .mf-obs-row-bottom { display:flex; justify-content:center; gap: 12px; }
 .mf-obs-item { display:flex; flex-direction:column; align-items:center; }
 .mf-obs-label { font-size: 11px; color:#a8bedd; margin-bottom:4px; }
-.mf-obs-scale { width:100px; height:100px; overflow:visible; }
+.mf-obs-scale { width:100px; height:157px; overflow:visible; }
 .mf-obs-scale .observatory { transform: scale(0.625); transform-origin: top left; }
 #mf-highlights {
   text-align:left; font-size:11px; color:#8aa0c0; line-height:1.7;
@@ -534,6 +561,22 @@ body {
   border-radius:4px; color:#f0d060; font-size:13px; font-weight:bold; cursor:pointer;
 }
 #mf-replay:hover { background:#2a3a5a; }
+#mf-share {
+  width:100%; padding:8px 12px; background:#241a2e; border:1px solid #9a6ac0;
+  border-radius:4px; color:#c8a0e8; font-size:12px; font-weight:bold; cursor:pointer;
+  margin-bottom:8px;
+}
+#mf-share:hover { background:#33223f; }
+#mf-share-status { font-size:11px; color:#8aa0c0; min-height:14px; margin-bottom:8px; }
+.mf-score-row { cursor:pointer; }
+.mf-score-row .mf-caret { font-size:10px; color:#5a7090; margin-right:4px; }
+.mf-breakdown {
+  text-align:left; font-size:11px; color:#a8bedd; line-height:1.6;
+  background:rgba(255,255,255,0.03); border-radius:4px; padding:6px 8px;
+  margin:-2px 0 6px;
+}
+.mf-breakdown .mf-b-row { display:flex; justify-content:space-between; }
+.mf-breakdown .mf-b-row.mf-b-total { border-top:1px dashed #2a3a5a; margin-top:3px; padding-top:3px; color:#f0d060; }
 
 ::-webkit-scrollbar { width:4px; height:4px; }
 ::-webkit-scrollbar-track { background:#080e1a; }
@@ -640,7 +683,8 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
 <div id="header">
   <h1>木星に向かう12のステップ</h1>
   <div class="status">
-    <span id="rnd">ラウンド 1</span>　<span id="phase">準備中</span>
+    <span id="rnd">ラウンド 1</span>　<span id="phase">準備中</span><span id="seed-label"></span>
+    <button type="button" id="daily-btn" onclick="confirmStartDaily()" title="今日は誰がやっても同じ配牌になる、日替わりチャレンジ">🎲</button>
     <button type="button" id="help-btn" onclick="showRulesModal()" title="遊び方">？</button>
     <button type="button" id="ambient-btn" onclick="toggleAmbient()" title="環境音（パルス）のON/OFF">♪</button>
   </div>
@@ -863,6 +907,8 @@ body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note {
       </div>
     </div>
     <div id="mf-highlights"></div>
+    <div id="mf-share-status"></div>
+    <button type="button" id="mf-share">📋 結果をシェア</button>
     <button type="button" id="mf-replay">もう一度遊ぶ</button>
   </div>
 </div>
@@ -887,6 +933,70 @@ var SUMMARY = {
 };
 
 var PH = { DEAL:'deal', RESOLVE:'resolve', ACTION:'action', WAIT_AI:'wait_ai', OVER:'over' };
+
+// ========== シード共有機能（本日の挑戦／結果シェア用） ==========
+// 文字列→32bit整数ハッシュ
+function hashStringToSeed(str){
+  var h = 1779033703 ^ str.length;
+  for (var i=0;i<str.length;i++){
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h<<13)|(h>>>19);
+  }
+  return (h>>>0) || 1;
+}
+// mulberry32：シード値から再現可能な乱数列を作る
+function makeSeededRng(seed){
+  var a = seed>>>0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function todaySeedString(){
+  var d = new Date();
+  return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+// 現在のRNG（通常はMath.random、シード指定時は再現可能な乱数に差し替え）
+var RNG = Math.random;
+
+// ========== 未捕捉エラーの可視化 ==========
+// 何らかの例外でゲームループが止まった（＝画面がフリーズしたように見える）場合に、
+// 原因をログパネルにも出す（コンソールを開けない環境向けの保険）
+window.addEventListener('error', function(e){
+  console.error('Uncaught error:', e.error || e.message);
+  try{
+    addLog('⚠️ エラーが発生しました：'+(e.message||'不明なエラー')+'（F12でコンソールを開くと詳細が見られます）','imp');
+  }catch(_ignore){}
+});
+// このゲームのシード情報（結果シェア文言に使う）
+var seedInfo = { type:'random', label:'', code:'' };
+
+function resolveSeedFromUrl(){
+  try{
+    var params = new URLSearchParams(window.location.search);
+    var seedParam = params.get('seed');
+    if(seedParam){
+      RNG = makeSeededRng(hashStringToSeed(seedParam));
+      seedInfo = { type:'custom', label:'シード「'+seedParam+'」', code:seedParam };
+      return;
+    }
+  }catch(e){ /* URLSearchParams非対応環境は無視して通常プレイ */ }
+  RNG = Math.random;
+  seedInfo = { type:'random', label:'', code:'' };
+}
+function startTodaysChallenge(){
+  var code = todaySeedString();
+  RNG = makeSeededRng(hashStringToSeed(code));
+  seedInfo = { type:'daily', label:'本日の挑戦（'+code+'）', code:code };
+  initGame();
+}
+function buildShareUrl(code){
+  var url = new URL(window.location.href);
+  url.searchParams.set('seed', code);
+  return url.toString();
+}
 
 // 開発エリア（灰色）の「2枚以上」判定は表向きカードのみをカウントする
 // （一度裏向きになったカードは開発エリアのカウントから除外される仕様変更）
@@ -917,7 +1027,7 @@ function initGame(){
     return { id:c.id, value:c.value, front:Object.assign({},c.front), back:Object.assign({},c.back), faceUp:true };
   });
   for(var i=deck.length-1;i>0;i--){
-    var j=Math.floor(Math.random()*(i+1));
+    var j=Math.floor(RNG()*(i+1));
     var tmp=deck[i]; deck[i]=deck[j]; deck[j]=tmp;
   }
 
@@ -946,6 +1056,7 @@ function initGame(){
   G = { players:players, deck:deck, discard:[], round:1, startIdx:startIdx,
         phase:PH.DEAL, played:[], order:[], opos:0, pendingAi:null,
         playHistory:[[],[],[]],
+        seedInfo: seedInfo,
         jupiterBonus: null, // 木星衛星（+7点）最初にtop辺裏向き達成者のpi
         marsBonus: null,    // 火星衛星（+3点）最初にleft辺裏向き達成者のpi
         stats:[
@@ -953,6 +1064,12 @@ function initGame(){
           {rankWins:[0,0,0], goldRound:null, topCards:0, leftCards:0},
           {rankWins:[0,0,0], goldRound:null, topCards:0, leftCards:0}
         ] };
+
+  // シード付きゲームは1回使ったら消費：次の「もう一度遊ぶ」は通常の乱数に戻す
+  if(seedInfo.type!=='random'){
+    RNG = Math.random;
+    seedInfo = { type:'random', label:'', code:'' };
+  }
 
   addLog('ゲーム開始！　スタート：'+players[startIdx].name,'imp');
   render();
@@ -1015,6 +1132,30 @@ function calcScore(p){
     if(G.marsBonus===pi) s+=3;
   }
   return s;
+}
+
+// スコア内訳（エリア別・金色化・手札・衛星ボーナス）を項目ごとに返す
+function calcScoreBreakdown(p){
+  var items = [];
+  EDGES.forEach(function(edge){
+    var cardEdge=OPPOSITE[edge];
+    var pts=0, cnt=0;
+    (p.obs.stacks[edge]||[]).forEach(function(card){
+      pts += ((card.faceUp ? card.front : card.back)[cardEdge]||0);
+      cnt++;
+    });
+    var areaName = AREA_LABEL[edgeArea(p.obs,edge)] || edge;
+    items.push({ label: areaName, count: cnt, pts: pts });
+  });
+  items.push({ label:'金色化ボーナス', count:null, pts: p.obs.isGold?5:0 });
+  items.push({ label:'手札残り('+p.hand.length+'枚)', count:null, pts: p.hand.length*2 });
+  if(G){
+    var pi = G.players.indexOf(p);
+    items.push({ label:'🪐 木星衛星ボーナス', count:null, pts: G.jupiterBonus===pi?7:0 });
+    items.push({ label:'🔴 火星衛星ボーナス', count:null, pts: G.marsBonus===pi?3:0 });
+  }
+  var total = items.reduce(function(a,it){return a+it.pts;},0);
+  return { items: items, total: total };
 }
 
 // ========== AI強化版（得点シミュレーション） ==========
@@ -2538,40 +2679,72 @@ function showCardSelectUI(pi,rank,steps,playedCard){
   showModal('どのカードを移動しますか？','',choices);
 }
 
+// カード1枚ぶんの見た目HTMLを生成（既存の.cardスタイルを流用）
+// opts: selectable(bool), onClick(文字列としてonclick属性に埋め込む), extraClass
+function cardHtmlFor(card, opts){
+  opts = opts || {};
+  var img = card.faceUp ? ('card '+pad2(card.id)+' front.jpg') : 'card back 01-56.jpg';
+  var cls = 'card' + (opts.selectable ? ' selectable' : '') + (opts.extraClass ? ' '+opts.extraClass : '');
+  var click = opts.onClick ? (' onclick="'+opts.onClick+'"') : '';
+  // 表向きはイラストに数字が入っているので重ねて表示しない。裏向きのみ「裏」を表示。
+  var numHtml = card.faceUp ? '' : '<span class="cnum show">裏</span>';
+  var badgeHtml = opts.badge ? '<span class="card-self-badge">'+opts.badge+'</span>' : '';
+  return '<div class="'+cls+'"'+click+'><img src="'+img+'" onerror="this.style.display=\'none\'">'+numHtml+badgeHtml+'</div>';
+}
+
+// カード選択グリッドの選択中コンテキスト（handleCardSelectClickから参照）
+var pendingCardSelect = null;
+function handleCardSelectClick(gi){
+  var sel = pendingCardSelect; if(!sel) return;
+  var entry = sel.choices[gi];
+  closeModal();
+  pendingCardSelect = null;
+  if(sel.type==='discard'){
+    if(sel.mode==='take'){
+      G.phase=PH.RESOLVE; execAction(sel.pi,sel.rank,{act:'take_discard',discIdx:entry.idx},sel.playedCard);
+    } else {
+      showSwapHandUI(sel.pi,sel.rank,sel.playedCard,entry.idx); // ここでpendingCardSelectが新たにセットされる
+    }
+  } else if(sel.type==='hand'){
+    G.phase=PH.RESOLVE; execAction(sel.pi,sel.rank,{act:'swap_discard',handIdx:entry.idx,discIdx:sel.discIdx},sel.playedCard);
+  }
+}
+
 function showDiscardSelectUI(pi,rank,playedCard,mode,excludeCard){
   var choices=G.discard.map(function(card,i){ return {card:card, idx:i}; })
     .filter(function(entry){
       if(excludeCard && entry.card.id === excludeCard.id && entry.card.value === excludeCard.value) return false;
       return true;
     })
-    .sort(function(a,b){ return a.card.value - b.card.value; }) // 小さい順に整列
-    .map(function(entry){
-      var card=entry.card, i=entry.idx;
-      return { label:card.value+'（'+(card.faceUp?'表':'裏')+'）',
-        fn:(function(idx){ return function(){ closeModal();
-          if(mode==='take'){ G.phase=PH.RESOLVE; execAction(pi,rank,{act:'take_discard',discIdx:idx},playedCard); }
-          else { showSwapHandUI(pi,rank,playedCard,idx); }
-        }; })(i) };
-    });
+    .sort(function(a,b){ return a.card.value - b.card.value; }); // 小さい順に整列
+
   if(choices.length===0){
     closeModal();
     G.phase=PH.RESOLVE;
     execAction(pi,rank,{act:'pass'},playedCard);
     return;
   }
-  showModal('捨て札からどれを選びますか？','',choices);
+
+  pendingCardSelect = { type:'discard', pi:pi, rank:rank, playedCard:playedCard, mode:mode, choices:choices };
+  var grid = '<div class="card-select-grid">' + choices.map(function(entry,gi){
+    return cardHtmlFor(entry.card, {selectable:true, onClick:'handleCardSelectClick('+gi+')'});
+  }).join('') + '</div>';
+  showModal('捨て札からどれを選びますか？','',[],grid);
 }
 
 function showSwapHandUI(pi,rank,playedCard,discIdx){
-  var p=G.players[pi]; var discCard=G.discard[discIdx];
-  var choices=p.hand.map(function(card,i){
-    return { label:'手札の'+card.value+'と交換',
-      fn:(function(idx){ return function(){ closeModal(); G.phase=PH.RESOLVE; execAction(pi,rank,{act:'swap_discard',handIdx:idx,discIdx:discIdx},playedCard); }; })(i) };
-  });
-  showModal('手札のどれと交換しますか？','選んだ捨て札：'+discCard.value,choices);
+  var p=G.players[pi];
+  var choices=p.hand.map(function(card,i){ return {card:card, idx:i}; }); // 引いたカード自身は候補に含めない（戻すのは不可）
+
+  pendingCardSelect = { type:'hand', pi:pi, rank:rank, playedCard:playedCard, discIdx:discIdx, choices:choices };
+  var grid = '<div class="card-select-grid">' + choices.map(function(entry,gi){
+    return cardHtmlFor(entry.card, {selectable:true, onClick:'handleCardSelectClick('+gi+')'});
+  }).join('') + '</div>';
+  showModal('手放すカードを選んでください','',[],grid);
 }
 
 function showSwapDiscardUI(pi,rank,playedCard,excludeCard){ showDiscardSelectUI(pi,rank,playedCard,'swap',excludeCard); }
+
 
 // 交信エリアの交換で「どの手札カードを手放すか」を賢く選ぶ
 // 単純な最小値固定ではなく、現在の狙い（intendedRank）と手札構成を見て判断
@@ -2704,7 +2877,7 @@ function execAction(pi,rank,dec,playedCard){
           }
         } else {
           if(!noDiscard && playedCard) G.discard.push(playedCard);
-          G.opos++; render(); showDiscardSelectUI(pi,rank,null,'take',playedCard); return;
+          G.opos++; setAP('待機中',[]); render(); showDiscardSelectUI(pi,rank,null,'take',playedCard); return;
         }
       } else { addLog(p.name+'：遭遇エリア（捨て札なし）',logType); }
     }
@@ -2730,7 +2903,7 @@ function execAction(pi,rank,dec,playedCard){
         }
       } else {
         if(!noDiscard && playedCard) G.discard.push(playedCard);
-        G.opos++; render(); showSwapDiscardUI(pi,rank,null,playedCard); return;
+        G.opos++; setAP('待機中',[]); render(); showSwapDiscardUI(pi,rank,null,playedCard); return;
       }
     } else if(area==='contact'){
       addLog(p.name+'：交信エリア（交換できるカードなし）',logType);
@@ -2780,7 +2953,7 @@ function endRound(){
 function gameOver(){
   G.phase=PH.OVER; render();
   var scores=G.players.map(function(p,i){
-    return {name:p.name, score:calcScore(p), pi:i, p:p};
+    return {name:p.name, score:calcScore(p), pi:i, p:p, breakdown:calcScoreBreakdown(p)};
   }).sort(function(a,b){return b.score-a.score;});
 
   addLog('=== ゲーム終了 ===','imp');
@@ -2832,14 +3005,34 @@ function gameOver(){
 }
 
 // ========== ゲーム終了モーダル（木星到達演出） ==========
+function toggleScoreBreakdown(pi){
+  var el = document.getElementById('mf-breakdown-'+pi);
+  var caret = document.getElementById('mf-caret-'+pi);
+  if(!el) return;
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if(caret) caret.textContent = open ? '▸' : '▾';
+}
+
+function buildBreakdownHtml(breakdown){
+  var rows = breakdown.items.map(function(it){
+    var cnt = (it.count!==null) ? '（'+it.count+'枚）' : '';
+    return '<div class="mf-b-row"><span>'+it.label+cnt+'</span><span>'+(it.pts>=0?'+':'')+it.pts+'</span></div>';
+  }).join('');
+  rows += '<div class="mf-b-row mf-b-total"><span>合計</span><span>'+breakdown.total+'点</span></div>';
+  return rows;
+}
+
 function showGameOverModal(scores, highlights){
   var rows = scores.map(function(s,i){
-    return '<div class="mf-score-row'+(i===0?' winner':'')+'">'
-      +'<span class="mf-name">'+(i===0?'🏆 ':'')+s.name+'</span>'
-      +'<span class="mf-num" data-target="'+s.score+'">0点</span></div>';
+    return '<div class="mf-score-row'+(i===0?' winner':'')+'" onclick="toggleScoreBreakdown('+s.pi+')">'
+      +'<span class="mf-name"><span class="mf-caret" id="mf-caret-'+s.pi+'">▸</span>'+(i===0?'🏆 ':'')+s.name+'</span>'
+      +'<span class="mf-num" data-target="'+s.score+'">0点</span></div>'
+      +'<div class="mf-breakdown" id="mf-breakdown-'+s.pi+'" style="display:none">'+buildBreakdownHtml(s.breakdown)+'</div>';
   }).join('');
   document.getElementById('mf-scores').innerHTML = rows;
   document.getElementById('mf-highlights').innerHTML = highlights.map(function(h){ return '<div>'+h+'</div>'; }).join('');
+  document.getElementById('mf-share-status').textContent = '';
   renderObs('mf-human', G.players[0]);
   renderObs('mf-ai1', G.players[1]);
   renderObs('mf-ai2', G.players[2]);
@@ -2860,6 +3053,41 @@ function showGameOverModal(scores, highlights){
     }
     requestAnimationFrame(step);
   });
+
+  // 結果シェア
+  var shareBtn = document.getElementById('mf-share');
+  shareBtn.onclick = function(){
+    var humanEntry = scores.filter(function(s){return s.pi===0;})[0];
+    var rank = scores.indexOf(humanEntry)+1;
+    var seedLine = (G.seedInfo && G.seedInfo.type!=='random') ? G.seedInfo.label : 'フリープレイ';
+    var jup = G.jupiterBonus===0 ? '✅' : '❌';
+    var mars = G.marsBonus===0 ? '✅' : '❌';
+    var goldRound = G.stats[0].goldRound ? 'R'+G.stats[0].goldRound+'で金色化' : '金色化できず';
+    var text = '🪐 木星に向かう12のステップ\n'
+      + seedLine + '\n'
+      + '得点：'+humanEntry.score+'点（'+rank+'位/'+scores.length+'人）\n'
+      + '🪐木星:'+jup+' 🔴火星:'+mars+' ✨'+goldRound+'\n';
+    if(G.seedInfo && G.seedInfo.code){
+      text += buildShareUrl(G.seedInfo.code)+'\n';
+    }
+    text += '#Jupiter12';
+
+    var statusEl = document.getElementById('mf-share-status');
+    function showCopied(){ statusEl.textContent = 'コピーしました！貼り付けてシェアできます。'; }
+    function showFailed(){ statusEl.textContent = text; statusEl.style.whiteSpace='pre-wrap'; }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(showCopied).catch(showFailed);
+    } else {
+      try{
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showCopied();
+      }catch(e){ showFailed(); }
+    }
+  };
 }
 
 
@@ -2887,6 +3115,8 @@ function render(){
   var ps=G.players;
   document.getElementById('rnd').textContent='ラウンド '+G.round;
   document.getElementById('phase').textContent=phLbl(G.phase);
+  var seedLbl=document.getElementById('seed-label');
+  if(seedLbl) seedLbl.textContent = (G.seedInfo && G.seedInfo.type!=='random') ? ('　'+G.seedInfo.label) : '';
   document.getElementById('hc-human').textContent=ps[0].hand.length;
   document.getElementById('hc-ai1').textContent=ps[1].hand.length;
   document.getElementById('hc-ai2').textContent=ps[2].hand.length;
@@ -3177,6 +3407,15 @@ function ambientLoop(){
   AMB.timer = setTimeout(ambientLoop, AMB_CYCLE_SEC*1000);
 }
 
+function confirmStartDaily(){
+  if(G && G.phase!==PH.OVER){
+    if(!window.confirm('現在のゲームを中断して、本日の挑戦（今日は誰がやっても同じ配牌）を始めますか？')) return;
+  }
+  document.getElementById('modal-final').classList.remove('show');
+  closeModal();
+  startTodaysChallenge();
+}
+
 function toggleAmbient(){
   var btn = document.getElementById('ambient-btn');
   if(!AMB.ctx){
@@ -3371,8 +3610,11 @@ window.addEventListener('load',function(){
   updateMobileLayout();
   resizeActiveTab();
   window.addEventListener('resize', function(){ updateMobileLayout(); resizeActiveTab(); });
+  resolveSeedFromUrl();
+  var introDesc = 'AI 2体と対戦します。\n手札12枚を使って最高得点を目指してください。';
+  if(seedInfo.type==='custom') introDesc += '\n\n🔗 共有された'+seedInfo.label+'でスタートします。';
   showModal('木星に向かう12のステップ',
-    'AI 2体と対戦します。\n手札12枚を使って最高得点を目指してください。',
+    introDesc,
     [{label:'ゲーム開始',fn:function(){ closeModal(); initGame(); }}],
     RULES_HTML);
 });
