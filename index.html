@@ -3112,6 +3112,7 @@ function getAiStrategy(p, pi){
 
 function render(){
   if(!G) return;
+  updateMobileLayout(); // 毎回呼び直すことで、読み込みタイミングの問題があっても自己修復する
   var ps=G.players;
   document.getElementById('rnd').textContent='ラウンド '+G.round;
   document.getElementById('phase').textContent=phLbl(G.phase);
