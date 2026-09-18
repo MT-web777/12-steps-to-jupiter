@@ -3566,6 +3566,20 @@ function resizeHandCards(){
   var handArea = document.getElementById('hand-area');
   if(!col||!handArea) return;
 
+  // タブモード（body.tab-mode）はページ全体がスクロールする作りのため、
+  // #hand-colの「flex:1で残り高さいっぱいに伸ばす」トリックが効かず、
+  // 中身の分だけ際限なく伸びてしまう（→手札エリアの高さが実際のビューポートより
+  // ずっと大きく計算され、カードが巨大化するバグの原因になっていた）。
+  // ここでJSから明示的にビューポート基準の高さを与えて、その伸びを止める。
+  if(document.body.classList.contains('tab-mode')){
+    col.style.height = '';
+    var rect = col.getBoundingClientRect();
+    var availPageH = Math.floor(window.innerHeight - rect.top - 8);
+    col.style.height = Math.max(availPageH, 160) + 'px';
+  } else {
+    col.style.height = '';
+  }
+
   var n = handArea.children.length;
   if(n < 1) n = 1;
   var availW = handArea.clientWidth;
