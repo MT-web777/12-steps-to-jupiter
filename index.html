@@ -652,6 +652,24 @@ body.tab-mode #mbox p { font-size: 14px !important; }
 body.tab-mode .mbtn { font-size: 14px !important; padding: 10px 12px !important; }
 body.tab-mode .rule-chip, body.tab-mode .rule-chip b, body.tab-mode .rule-note { font-size: 12px !important; }
 
+/* ===== 「あなたの天文台」タブ：画面にぴったり収める ===== */
+/* 天文台は縮小前の実寸(300+左右エッジ)で測る。指定しないと親の幅に縮められて、
+   拡縮率が狂い、右側にはみ出していた */
+body.tab-mode #obs-wrap-human { width: max-content; }
+/* 天文台を中身の高さで切り取らない（下辺のカードが見切れる原因だった） */
+body.tab-mode #obs-area .player-block { flex: 0 0 auto; overflow: visible; }
+body.tab-mode #obs-area { overflow: hidden; padding: 4px; gap: 2px; box-sizing: border-box; }
+/* このタブでは場に出したカード3枚を数字だけの1行に圧縮し、天文台に高さを回す */
+body.tab-obs #persistent-top { padding: 4px 10px; gap: 4px; }
+body.tab-obs #persistent-top #played-area { gap: 16px; }
+body.tab-obs .played-slot { flex-direction: row; gap: 5px; align-items: baseline; }
+body.tab-obs .played-slot .card { display: none; }
+body.tab-obs .played-slot .slot-val { min-height: 0 !important; font-size: 18px !important; }
+body.tab-obs .played-slot .slot-name { font-size: 12px !important; }
+body.tab-obs #action-panel .abtn { padding: 12px 12px !important; }
+/* アクション枠・ボタンが右にはみ出して画面幅を超えていたのを直す */
+body.tab-mode #action-panel, body.tab-mode .abtn { box-sizing: border-box; }
+
 /* ===== 3パートのタブ切り替え（常時オン。画面幅の判定には依存しない） ===== */
 #mobile-tabs {
   display: flex;
@@ -3318,6 +3336,10 @@ function setAP(title,btns){
     btn.className='abtn'+(b.primary?' primary':''); btn.textContent=b.label;
     btn.addEventListener('click',b.fn); area.appendChild(btn);
   });
+  // ボタン数でアクション枠の高さが変わる→天文台タブの余白も変わるので再フィット
+  if(typeof isNarrowScreen==='function' && isNarrowScreen() && document.body.classList.contains('tab-obs')){
+    resizeObsHuman();
+  }
 }
 
 // ========== ログ ==========
@@ -3472,23 +3494,36 @@ function resizeObsHuman(){
     return;
   }
 
-  // スマホ幅では、横にはみ出すと横スクロールが必要になりタップしづらいので、
-  // 横幅だけ画面に収まるよう縮小する（縦は自然な縦スクロールに任せる）。
-  // CSSのtransform:scaleはタップ座標も一緒に変換されるため、判定ズレは起きない。
+  // スマホ幅：天文台（左右上下のロケット置き場を含む全体）が、タブの余白に
+  // 縦横ともぴったり収まるよう縮小する。CSSのtransform:scaleはタップ座標も
+  // 一緒に変換されるため、縮小しても判定ズレは起きない。
   wrap.style.transform = 'none';
   box.style.width = '';
   box.style.height = '';
   var obsArea = document.getElementById('obs-area');
-  var availW = (obsArea ? obsArea.clientWidth : window.innerWidth) - 8;
+  if(!obsArea) return;
+  var cs = getComputedStyle(obsArea);
+  var padX = (parseFloat(cs.paddingLeft)||0) + (parseFloat(cs.paddingRight)||0);
+  var padY = (parseFloat(cs.paddingTop)||0) + (parseFloat(cs.paddingBottom)||0);
+  var lbl = document.getElementById('lbl-human');
+  var lblH = lbl ? lbl.offsetHeight + 4 : 0; // ラベル＋player-blockのgap
+  // 縦の余白は「画面の高さ − 天文台エリアの上端 − ログ欄」で決める
+  // （エリア自体の高さは中身に引っ張られて伸びるので当てにしない）
+  var logEl = document.getElementById('log-area');
+  var logH = logEl ? logEl.offsetHeight : 0;
+  var areaTop = obsArea.getBoundingClientRect().top + (window.pageYOffset||0);
+  var availW = obsArea.clientWidth - padX;
+  var availH = window.innerHeight - logH - areaTop - padY - lblH - 2;
   var naturalW = wrap.offsetWidth;
   var naturalH = wrap.offsetHeight;
-  if(availW<=0 || naturalW<=0){
+  if(availW<=0 || availH<=0 || naturalW<=0){
     // 表示切替直後でレイアウトがまだ確定していない可能性があるため、次フレームで再試行する
     if(typeof requestAnimationFrame==='function') requestAnimationFrame(resizeObsHuman);
     return;
   }
-  var scale = Math.min(1, availW / naturalW);
-  wrap.style.transformOrigin = 'top center';
+  var scale = Math.min(1, availW / naturalW, availH / naturalH);
+  scale = Math.max(0.2, scale);
+  wrap.style.transformOrigin = 'top left';
   wrap.style.transform = 'scale('+scale+')';
   box.style.width = Math.round(naturalW*scale)+'px';
   box.style.height = Math.round(naturalH*scale)+'px';
@@ -3549,6 +3584,7 @@ function applyMobilePanel(name){
   });
   var top = document.getElementById('persistent-top');
   if(top) top.style.display = (name==='ai-sidebar') ? 'none' : '';
+  document.body.classList.toggle('tab-obs', name==='obs-area');
 }
 
 function switchMobileTab(name){
@@ -3573,6 +3609,7 @@ function updateMobileLayout(){
   } else {
     // PC等の広い画面：タブ切り替えUIをやめ、3カラムを同時表示する
     document.body.classList.remove('tab-mode');
+    document.body.classList.remove('tab-obs');
     if(tabsBar) tabsBar.style.display = 'none';
     MOBILE_TAB_PANELS.forEach(function(id){
       var el = document.getElementById(id);
@@ -3649,6 +3686,19 @@ window.addEventListener('load',function(){
   updateMobileLayout();
   resizeActiveTab();
   window.addEventListener('resize', function(){ updateMobileLayout(); resizeActiveTab(); });
+  // ヘッダーの状態表示（ラウンド／フェーズ）の折り返しや、アクション枠の高さが変わると
+  // 天文台タブの縦の余白も変わるので、そのたびに天文台をフィットし直す
+  if(typeof ResizeObserver !== 'undefined'){
+    var obsFitTimer = null;
+    var obsFitRO = new ResizeObserver(function(){
+      if(!document.body.classList.contains('tab-obs')) return;
+      if(obsFitTimer) return;
+      obsFitTimer = setTimeout(function(){ obsFitTimer = null; resizeObsHuman(); }, 30);
+    });
+    ['header','mobile-tabs','persistent-top','log-area'].forEach(function(id){
+      var el = document.getElementById(id); if(el) obsFitRO.observe(el);
+    });
+  }
   resolveSeedFromUrl();
   var introDesc = 'AI 2体と対戦します。\n手札12枚を使って最高得点を目指してください。';
   if(seedInfo.type==='custom') introDesc += '\n\n🔗 共有された'+seedInfo.label+'でスタートします。';
