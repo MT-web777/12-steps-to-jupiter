@@ -1025,7 +1025,7 @@ function faceUpCount(stack){
 var ALL_CARDS = [];
 (function(){
   var front = { top:0, right:1, bottom:0, left:-4 };
-  var back  = { top:1, right:5, bottom:10, left:2 };
+  var back  = { top:4, right:5, bottom:10, left:2 };
   for(var i=1;i<=56;i++){
     ALL_CARDS.push({
       id:i, value:i,
@@ -3173,10 +3173,12 @@ function buildBreakdownHtml(breakdown){
 
 function showGameOverModal(scores, highlights){
   var rows = scores.map(function(s,i){
+    var isHuman = (s.pi===0);
     return '<div class="mf-score-row'+(i===0?' winner':'')+'" onclick="toggleScoreBreakdown('+s.pi+')">'
-      +'<span class="mf-name"><span class="mf-caret" id="mf-caret-'+s.pi+'">▸</span>'+(i===0?'🏆 ':'')+s.name+'</span>'
+      +'<span class="mf-name"><span class="mf-caret" id="mf-caret-'+s.pi+'">'+(isHuman?'▾':'▸')+'</span>'+(i===0?'🏆 ':'')+s.name+'</span>'
       +'<span class="mf-num" data-target="'+s.score+'">0点</span></div>'
-      +'<div class="mf-breakdown" id="mf-breakdown-'+s.pi+'" style="display:none">'+buildBreakdownHtml(s.breakdown)+'</div>';
+      // 自分（あなた）の内訳は、得点の見方に気づいてもらえるよう最初から開いておく
+      +'<div class="mf-breakdown" id="mf-breakdown-'+s.pi+'" style="display:'+(isHuman?'block':'none')+'">'+buildBreakdownHtml(s.breakdown)+'</div>';
   }).join('');
   document.getElementById('mf-scores').innerHTML = rows;
   document.getElementById('mf-highlights').innerHTML = highlights.map(function(h){ return '<div>'+h+'</div>'; }).join('');
