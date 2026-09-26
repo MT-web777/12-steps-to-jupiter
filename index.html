@@ -38,13 +38,13 @@ body {
   cursor: pointer; flex-shrink: 0; padding: 0;
 }
 #help-btn:hover { background: rgba(200,184,106,0.3); }
-#daily-btn {
+#random-btn {
   width: 22px; height: 22px; border-radius: 50%;
   background: rgba(224,87,138,0.15); border: 1px solid #e0578a;
   color: #e0578a; font-size: 12px; font-weight: bold; line-height: 1;
   cursor: pointer; flex-shrink: 0; padding: 0;
 }
-#daily-btn:hover { background: rgba(224,87,138,0.3); }
+#random-btn:hover { background: rgba(224,87,138,0.3); }
 #ambient-btn {
   width: 22px; height: 22px; border-radius: 50%;
   background: rgba(90,122,170,0.15); border: 1px solid #5a7aaa;
@@ -691,7 +691,7 @@ body.tab-mode #action-panel, body.tab-mode .abtn { box-sizing: border-box; }
   <h1>木星に向かう12のステップ</h1>
   <div class="status">
     <span id="rnd">ラウンド 1</span>　<span id="phase">準備中</span><span id="seed-label"></span>
-    <button type="button" id="daily-btn" onclick="confirmStartDaily()" title="今日は誰がやっても同じ配牌になる、日替わりチャレンジ">🎲</button>
+    <button type="button" id="random-btn" onclick="confirmStartRandom()" title="ランダムな配牌で新しく始める">🎲</button>
     <button type="button" id="help-btn" onclick="showRulesModal()" title="遊び方">？</button>
     <button type="button" id="ambient-btn" onclick="toggleAmbient()" title="環境音（パルス）のON/OFF">♪</button>
   </div>
@@ -978,6 +978,11 @@ window.addEventListener('error', function(e){
   }catch(_ignore){}
 });
 // このゲームのシード情報（結果シェア文言に使う）
+// ===== 「結果をシェア」ボタンで引用ポスト対象にするXの投稿URL =====
+// 告知本体のポストが公開されたら、そのポストのURL（https://x.com/ユーザー名/status/数字...）を
+// ここに書き換えてファイルを差し替えるだけで反映される。空文字のままなら通常の新規ポスト作成になる。
+var QUOTE_TARGET_URL = '';
+
 var seedInfo = { type:'random', label:'', code:'' };
 
 function resolveSeedFromUrl(){
@@ -997,6 +1002,11 @@ function startTodaysChallenge(){
   var code = todaySeedString();
   RNG = makeSeededRng(hashStringToSeed(code));
   seedInfo = { type:'daily', label:'本日の挑戦（'+code+'）', code:code };
+  initGame();
+}
+function startRandomGame(){
+  RNG = Math.random;
+  seedInfo = { type:'random', label:'', code:'' };
   initGame();
 }
 function buildShareUrl(code){
@@ -1071,12 +1081,6 @@ function initGame(){
           {rankWins:[0,0,0], goldRound:null, topCards:0, leftCards:0},
           {rankWins:[0,0,0], goldRound:null, topCards:0, leftCards:0}
         ] };
-
-  // シード付きゲームは1回使ったら消費：次の「もう一度遊ぶ」は通常の乱数に戻す
-  if(seedInfo.type!=='random'){
-    RNG = Math.random;
-    seedInfo = { type:'random', label:'', code:'' };
-  }
 
   addLog('ゲーム開始！　スタート：'+players[startIdx].name,'imp');
   render();
@@ -1414,12 +1418,11 @@ function getPartnerIntendedRank(myPi){
   var pLeftSt = (pStacks['left']||[]).length;
   var pHighRatio = handHighRatio(partner.hand);
 
-  // パートナーが金色化前
+  // パートナーが金色化前：実際のaiIntendedRankと同じ判定で推定する
+  // （旧：独自の簡易推定で「建設2枚未満＝下段」としていたため、実際は序盤に上段を狙う相方とのバッティングを検出できなかった）
+  // -1（終盤圧縮モード）はそのまま返し、呼び出し側で「変更なし」扱いになる
   if(!partner.obs.isGold){
-    if(pConstStack < 2) return 2; // 建設優先→下段狙い
-    if(pLaunchSt >= 2) return 2; // 発射台が溜まっている→下段で建設へ
-    if(pHighRatio > 0.6) return 0; // ハイカード多い→上段狙い
-    return 2; // 基本は下段
+    return aiIntendedRank(partner, partnerPi);
   }
   // パートナーが金色化後
   if(pTopSt < 3) return 0; // top埋め→上段狙い
@@ -1435,6 +1438,10 @@ function getCooperativeRank(myPi, myIntended, humanPredictedRank){
 
   // バッティングしていない → そのまま
   if(partnerRank !== myIntended) return myIntended;
+
+  // バッティング時は非対称に解決する：アポロ(pi=1)は狙いを維持し、ソユーズ(pi=2)が譲る
+  // （両AIが同時に同じ別ランクへ動いて、誰も上段を取りに行かなくなるのを防ぐ）
+  if(myPi === 1) return myIntended;
 
   // バッティングしている → 役割分担を決める
   // 方針：人間が取りそうなランクを避けつつ、パートナーと別ランクを取る
@@ -1756,7 +1763,7 @@ function aiPickCardBase(p){
       // 精密妨害：本当に叩くべき相手のカードに割り込む
       var sabotage = getBestSabotageTarget(pi);
       var sabCard = G.played.find(function(e){ return e.pi===sabotage.pi; });
-      if(sabotage.value > 10 && sabCard){
+      if(sabotage.value > 5 && sabCard){
         var stv = sabCard.card.value;
         for(var i=0; i<sorted.length; i++){
           if(sorted[i].value > stv && sorted[i].value < stv+12){ return sorted[i]; }
@@ -1919,18 +1926,47 @@ function jupiterReachTiers(target){
   return res;
 }
 
+// 人間の建設リーチ（bottom2枚）で、今ラウンドに届く段（=3枚目が載り金色化する段）
+// 金色化前で、bottomがちょうど2枚のときだけ「王手」とみなす（リーチ時だけ阻止する）
+function goldReachTiers(target){
+  var res = [false,false,false];
+  if(target.obs.isGold) return res;
+  if((target.obs.stacks['bottom']||[]).length !== 2) return res;
+  ['top','mid','bot'].forEach(function(t, r){
+    var steps = SUMMARY['gray'][t];
+    EDGES.forEach(function(e){
+      if(e === 'bottom') return; // bottom→bottomは枚数が増えない
+      var st = target.obs.stacks[e] || [];
+      if(st.length===0) return;
+      if(moveEdge(e, steps)==='bottom') res[r] = true;
+    });
+  });
+  return res;
+}
+
 function jupiterGuardPick(p, base){
-  if(!base || !G || !G.players || !G.played) return null;
+  if(!G) return null;
   if(G.jupiterBonus !== null && G.jupiterBonus !== undefined) return null; // もう誰かが取得済み
+  return denyGuardPick(p, base, jupiterReachTiers, true, 'jupiter');
+}
+
+// 人間の金色化（建設3枚目）阻止。自分が先に金色化しても人間は止まらないので selfFirst は使わない
+function goldGuardPick(p, base){
+  return denyGuardPick(p, base, goldReachTiers, false, 'gold');
+}
+
+// 共通：人間が reachFn の段に入らないよう、カードを替える（コストが高ければ諦める）
+function denyGuardPick(p, base, reachFn, allowSelfFirst, kind){
+  if(!base || !G || !G.players || !G.played) return null;
   var pi = G.players.indexOf(p);
   if(pi <= 0) return null; // 人間自身は対象外
   var human = G.players[0];
-  var reachH = jupiterReachTiers(human);
+  var reachH = reachFn(human);
   if(!reachH[0] && !reachH[1] && !reachH[2]) return null; // 王手ではない
   var hp = G.played.find(function(e){ return e.pi===0; });
   if(!hp) return null; // 人間がまだ出していない → 何もしない
   var hv = hp.card.value;
-  var reachMe = jupiterReachTiers(p);
+  var reachMe = allowSelfFirst ? reachFn(p) : [false,false,false];
   var otherPi = (pi===1) ? 2 : 1;
   var op = G.played.find(function(e){ return e.pi===otherPi; });
 
@@ -1975,7 +2011,7 @@ function jupiterGuardPick(p, base){
     if(cost < bestCost){ bestCost = cost; best = c; }
   });
   if(!best || bestCost > 4) return null; // コストが高い → 諦める
-  lastJupiterGuard = { pi: pi, cost: bestCost };
+  lastJupiterGuard = { pi: pi, cost: bestCost, kind: kind };
   return best;
 }
 
@@ -1986,6 +2022,8 @@ function aiPickCard(p){
   try {
     var g = jupiterGuardPick(p, base);
     if(g) return g;
+    var g2 = goldGuardPick(p, base);
+    if(g2) return g2;
   } catch(e) { lastJupiterGuard = null; }
   return base;
 }
@@ -3185,23 +3223,95 @@ function showGameOverModal(scores, highlights){
     var statusEl = document.getElementById('mf-share-status');
     function showCopied(){ statusEl.textContent = 'コピーしました！貼り付けてシェアできます。'; }
     function showFailed(){ statusEl.textContent = text; statusEl.style.whiteSpace='pre-wrap'; }
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(showCopied).catch(showFailed);
-    } else {
-      try{
-        var ta = document.createElement('textarea');
-        ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
-        document.body.appendChild(ta); ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        showCopied();
-      }catch(e){ showFailed(); }
+    function copyFallback(){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(showCopied).catch(showFailed);
+      } else {
+        try{
+          var ta = document.createElement('textarea');
+          ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+          document.body.appendChild(ta); ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showCopied();
+        }catch(e){ showFailed(); }
+      }
     }
+    function openIntent(){
+      var intentUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text)
+        + (QUOTE_TARGET_URL ? '&url=' + encodeURIComponent(QUOTE_TARGET_URL) : '');
+      var win = window.open(intentUrl, '_blank');
+      if(win){ statusEl.textContent = '画像をダウンロードしました。Xの投稿画面が開くので、画像を1枚添付してください。'; }
+      else { copyFallback(); }
+    }
+
+    // 結果を画像化（1080x1080）してシェアに使う
+    buildResultImageBlob(humanEntry, rank, scores.length, jup, mars, goldRound, seedLine).then(function(blob){
+      // OSの共有シート（Twitter/メール等のアイコン）は環境によって選択後に渡らない不具合があるため使わず、
+      // 全環境共通で「画像を自動ダウンロード＋投稿画面をテキスト付きで開く（画像は手動で1枚添付）」に統一する
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = 'jupiter-result.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      openIntent();
+    }).catch(function(){
+      // 画像生成に失敗した場合は、従来通りテキストだけの投稿画面
+      openIntent();
+    });
   };
 }
 
 
+// ===== 結果画像の生成（シェア用）=====
+// canvasに結果を描画してPNGのBlobを返す
+function buildResultImageBlob(humanEntry, rank, playerCount, jup, mars, goldRound, seedLine){
+  return new Promise(function(resolve, reject){
+    try{
+      var W=1080, H=1080;
+      var cv = document.createElement('canvas'); cv.width=W; cv.height=H;
+      var ctx = cv.getContext('2d');
+
+      // 背景（グラデーション、ゲーム全体の配色に合わせる）
+      var bg = ctx.createLinearGradient(0,0,0,H);
+      bg.addColorStop(0,'#0a1224'); bg.addColorStop(1,'#131b33');
+      ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+      // 木星風の円
+      var jx=W/2, jy=280, jr=160;
+      var jg = ctx.createLinearGradient(jx-jr,jy-jr,jx+jr,jy+jr);
+      jg.addColorStop(0,'#f7b267'); jg.addColorStop(0.5,'#f4845f'); jg.addColorStop(1,'#c96f4a');
+      ctx.fillStyle = jg;
+      ctx.beginPath(); ctx.arc(jx,jy,jr,0,Math.PI*2); ctx.fill();
+
+      ctx.textAlign='center';
+      ctx.fillStyle='#f2d9a0';
+      ctx.font='bold 40px sans-serif';
+      ctx.fillText('🪐 木星に向かう12のステップ', W/2, 500);
+
+      ctx.font='24px sans-serif'; ctx.fillStyle='#8aa0c0';
+      ctx.fillText(seedLine, W/2, 545);
+
+      ctx.font='bold 64px sans-serif'; ctx.fillStyle='#ffffff';
+      ctx.fillText(humanEntry.score+'点', W/2, 660);
+
+      ctx.font='28px sans-serif'; ctx.fillStyle='#c9d4e8';
+      ctx.fillText(rank+'位 / '+playerCount+'人中', W/2, 705);
+
+      ctx.font='30px sans-serif'; ctx.fillStyle='#e0e6f0';
+      ctx.fillText('🪐木星:'+jup+'　🔴火星:'+mars, W/2, 790);
+      ctx.fillText('✨'+goldRound, W/2, 835);
+
+      ctx.font='22px sans-serif'; ctx.fillStyle='#5a6a8a';
+      ctx.fillText('#Jupiter12', W/2, 1000);
+
+      cv.toBlob(function(blob){
+        if(blob) resolve(blob); else reject(new Error('toBlob failed'));
+      }, 'image/png');
+    }catch(e){ reject(e); }
+  });
+}
+
 // ========== 描画 ==========
+
 function getAiStrategy(p, pi){
   var intended = aiIntendedRankCooperative(p, pi);
   if(intended === -1) return '手札圧縮';
@@ -3530,6 +3640,14 @@ function confirmStartDaily(){
   closeModal();
   startTodaysChallenge();
 }
+function confirmStartRandom(){
+  if(G && G.phase!==PH.OVER){
+    if(!window.confirm('現在のゲームを中断して、ランダムな配牌で新しく始めますか？')) return;
+  }
+  document.getElementById('modal-final').classList.remove('show');
+  closeModal();
+  startRandomGame();
+}
 
 function toggleAmbient(){
   var btn = document.getElementById('ambient-btn');
@@ -3771,6 +3889,11 @@ window.addEventListener('load',function(){
   document.getElementById('card-zoom').addEventListener('click', closeCardZoom);
   document.getElementById('mf-replay').addEventListener('click', function(){
     document.getElementById('modal-final').classList.remove('show');
+    // 本日の挑戦／共有シードだった場合は、同じ配牌をもう一度再現する
+    // （RNGは状態を持つ関数なので、続きから使うのではなく同じシードで作り直す）
+    if(seedInfo.type==='daily' || seedInfo.type==='custom'){
+      RNG = makeSeededRng(hashStringToSeed(seedInfo.code));
+    }
     initGame();
   });
   resizeHandCards();
@@ -3792,10 +3915,16 @@ window.addEventListener('load',function(){
   }
   resolveSeedFromUrl();
   var introDesc = 'AI 2体と対戦します。\n手札12枚を使って最高得点を目指してください。';
-  if(seedInfo.type==='custom') introDesc += '\n\n🔗 共有された'+seedInfo.label+'でスタートします。';
+  var startBtn;
+  if(seedInfo.type==='custom'){
+    introDesc += '\n\n🔗 共有された'+seedInfo.label+'でスタートします。';
+    startBtn = {label:'この挑戦を始める',fn:function(){ closeModal(); initGame(); }};
+  } else {
+    startBtn = {label:'🎲 本日の挑戦を始める',fn:function(){ closeModal(); startTodaysChallenge(); }};
+  }
   showModal('木星に向かう12のステップ',
     introDesc,
-    [{label:'ゲーム開始',fn:function(){ closeModal(); initGame(); }}],
+    [startBtn],
     RULES_HTML);
 });
 
