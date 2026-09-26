@@ -3237,25 +3237,23 @@ function showGameOverModal(scores, highlights){
         }catch(e){ showFailed(); }
       }
     }
-    function openIntent(){
-      var intentUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text)
-        + (QUOTE_TARGET_URL ? '&url=' + encodeURIComponent(QUOTE_TARGET_URL) : '');
-      var win = window.open(intentUrl, '_blank');
-      if(win){ statusEl.textContent = '画像をダウンロードしました。Xの投稿画面が開くので、画像を1枚添付してください。'; }
-      else { copyFallback(); }
-    }
 
-    // 結果を画像化（1080x1080）してシェアに使う
+    // クリックの直後（同期的）にXの投稿画面を開く。
+    // 画像生成はcanvas.toBlobが非同期のため、その完了後にwindow.open()するとポップアップブロックの対象になる。
+    var intentUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text)
+      + (QUOTE_TARGET_URL ? '&url=' + encodeURIComponent(QUOTE_TARGET_URL) : '');
+    var win = window.open(intentUrl, '_blank');
+    if(!win){ copyFallback(); return; }
+    statusEl.textContent = '画像を準備中です…（続けてダウンロードされます）';
+
+    // 結果を画像化（1080x1080）してダウンロード
     buildResultImageBlob(humanEntry, rank, scores.length, jup, mars, goldRound, seedLine).then(function(blob){
-      // OSの共有シート（Twitter/メール等のアイコン）は環境によって選択後に渡らない不具合があるため使わず、
-      // 全環境共通で「画像を自動ダウンロード＋投稿画面をテキスト付きで開く（画像は手動で1枚添付）」に統一する
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob); a.download = 'jupiter-result.png';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      openIntent();
+      statusEl.textContent = '画像をダウンロードしました。Xの投稿画面に1枚添付してください。';
     }).catch(function(){
-      // 画像生成に失敗した場合は、従来通りテキストだけの投稿画面
-      openIntent();
+      statusEl.textContent = 'Xの投稿画面を開きました。';
     });
   };
 }
