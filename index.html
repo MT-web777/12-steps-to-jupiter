@@ -3217,8 +3217,12 @@ function showGameOverModal(scores, highlights){
       + seedLine + '\n'
       + '得点：'+humanEntry.score+'点（'+rank+'位/'+scores.length+'人）\n'
       + '🪐木星:'+jup+' 🔴火星:'+mars+' ✨'+goldRound+'\n';
-    if(G.seedInfo && G.seedInfo.code){
+    if(G.seedInfo && G.seedInfo.type==='custom' && G.seedInfo.code){
+      // 共有シード（特定の配牌そのものを再現したい場合）は日付を焼き込んだリンクのまま
       text += buildShareUrl(G.seedInfo.code)+'\n';
+    } else if(G.seedInfo && G.seedInfo.type==='daily'){
+      // 本日の挑戦は、後日開いても「その時の本日」が自動で始まるよう、素のURL（seedなし）を共有する
+      text += window.location.origin + window.location.pathname + '\n';
     }
     text += '#Jupiter12';
 
