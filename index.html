@@ -1169,6 +1169,17 @@ function calcScoreBreakdown(p){
   return { items: items, total: total };
 }
 
+// 得点帯に応じた遊び心ランク（結果シェア用）
+function getScoreRank(score){
+  if(score>=50) return '👶✨ スターチャイルド';
+  if(score>=45) return '🪐 木星到達の天才';
+  if(score>=35) return '🚀 宇宙エリート';
+  if(score>=25) return '✨ 優秀な航海士';
+  if(score>=15) return '🌍 平均的な地球人';
+  if(score>=5)  return '🌑 迷子の宇宙船';
+  return '🛠️ 発射台Uターン組';
+}
+
 // ========== AI強化版（得点シミュレーション） ==========
 
 // プレイヤー状態のディープコピー
@@ -3213,9 +3224,10 @@ function showGameOverModal(scores, highlights){
     var jup = G.jupiterBonus===0 ? '✅' : '❌';
     var mars = G.marsBonus===0 ? '✅' : '❌';
     var goldRound = G.stats[0].goldRound ? 'R'+G.stats[0].goldRound+'で金色化' : '金色化できず';
+    var rankLabel = getScoreRank(humanEntry.score);
     var text = '🪐 木星に向かう12のステップ\n'
       + seedLine + '\n'
-      + '得点：'+humanEntry.score+'点（'+rank+'位/'+scores.length+'人）\n'
+      + '得点：'+humanEntry.score+'点（'+rank+'位/'+scores.length+'人）　'+rankLabel+'\n'
       + '🪐木星:'+jup+' 🔴火星:'+mars+' ✨'+goldRound+'\n';
     if(G.seedInfo && G.seedInfo.type==='custom' && G.seedInfo.code){
       // 共有シード（特定の配牌そのものを再現したい場合）は日付を焼き込んだリンクのまま
